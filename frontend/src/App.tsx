@@ -3,20 +3,22 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
+import Categories from "./pages/Categories";
+import Expenses from "./pages/Expenses";
+import Layout from "./components/shared/Layout";
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-
-  if (loading) return <p>Loading...</p>;             // still checking token
-  if (!user) return <Navigate to="/login" />;        // no user → redirect
-  return <>{children}</>;
+  if (loading) return <div>Loading...</div>;
+  if (!user) return <Navigate to="/login" replace />;
+  return <Layout>{children}</Layout>;  // ← only change here
 }
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
 
-  if (loading) return <p>Loading...</p>;
-  if (user) return <Navigate to="/dashboard" />;     // already logged in → redirect
+  if (loading) return <p className="p-8 text-center text-gray-500">Loading...</p>;
+  if (user) return <Navigate to="/dashboard" />;
   return <>{children}</>;
 }
 
@@ -25,6 +27,8 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          <Route path="/categories" element={<PrivateRoute><Categories /></PrivateRoute>} />
+          <Route path="/expenses" element={<PrivateRoute><Expenses /></PrivateRoute>} />
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
           <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />

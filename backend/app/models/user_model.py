@@ -15,7 +15,7 @@ class User(Base):
     categories = relationship("Category", back_populates="user", cascade="all, delete-orphan")
 
     # One-to-many relationship: a user can have many expenses.
-    expenses = relationship("Expense", cascade="all, delete-orphan")
+    expenses = relationship("Expense", back_populates="user", cascade="all, delete-orphan")
 
     # One-to-many relationship: a user can have many budgets.
-    budgets = relationship("Budget", cascade="all, delete-orphan")
+    budgets = relationship("Budget", back_populates="user", cascade="all, delete-orphan")

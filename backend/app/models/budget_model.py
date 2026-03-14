@@ -27,6 +27,6 @@ class Budget(Base):
     # Limit amount for this category in the given month.
     limit_amount = Column(Numeric(12, 2), nullable=False)
 
-    user = relationship("User")
-    category = relationship("Category")
+    user = relationship("User", back_populates="budgets")
+    category = relationship("Category", back_populates="budgets")
 

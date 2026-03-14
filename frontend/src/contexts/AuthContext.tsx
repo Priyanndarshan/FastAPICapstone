@@ -1,15 +1,9 @@
 // React hooks for context, side effects, and state
 import { createContext, useContext, useEffect, useState } from "react";
 // Auth API: get current user, login, logout, register (aliased to avoid name clash with our login/register functions)
-import { getMe, login as loginFn, logout as logoutFn, register as registerFn } from "../auth";
+import { getMe, login as loginFn, logout as logoutFn, register as registerFn } from "../api/auth";
 
-// Shape of the logged-in user returned by the API (e.g. /auth/me)
-interface User {
-    id: number;
-    name: string;
-    email: string;
-}
-
+import type { User } from "../types";
 // Everything the rest of the app can read/do from auth context
 interface AuthContextType {
     user: User | null;           // current user or null if not logged in

@@ -42,6 +42,6 @@ class Expense(Base):
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     # ORM relationships for convenience (no additional DB columns).
-    user = relationship("User")
-    category = relationship("Category")
+    user = relationship("User", back_populates="expenses")
+    category = relationship("Category", back_populates="expenses")
 

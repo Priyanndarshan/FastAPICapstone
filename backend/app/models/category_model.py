@@ -29,5 +29,6 @@ class Category(Base):
     user = relationship("User", back_populates="categories")
 
     # One-to-many: a category can have many expenses.
-    expenses = relationship("Expense")
+    expenses = relationship("Expense", back_populates="category")
+    budgets = relationship("Budget", back_populates="category")
 
