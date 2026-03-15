@@ -59,6 +59,8 @@ export default function Expenses() {
     const { categories } = useCategories();
     const { expenses, loading, error, refetch, addExpense, updateExpense, removeExpense } = useExpenses();
     const [page, setPage] = useState(1);
+    type SortOption = "date" | "amount_desc" | "amount_asc";
+    const [sortBy, setSortBy] = useState<SortOption>("date");
     const [exportMenuOpen, setExportMenuOpen] = useState(false);
     const exportMenuRef = useRef<HTMLDivElement>(null);
 
@@ -77,6 +79,10 @@ export default function Expenses() {
     const durationDropdownRef = useRef<HTMLDivElement>(null);
     const [categoryFilterOpen, setCategoryFilterOpen] = useState(false);
     const categoryFilterRef = useRef<HTMLDivElement>(null);
+    const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
+    const sortDropdownRef = useRef<HTMLDivElement>(null);
+    const [recurringFilterOpen, setRecurringFilterOpen] = useState(false);
+    const recurringFilterRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         function handleClickOutside(e: MouseEvent) {
@@ -92,6 +98,12 @@ export default function Expenses() {
             }
             if (categoryFilterRef.current && !categoryFilterRef.current.contains(target)) {
                 setCategoryFilterOpen(false);
+            }
+            if (recurringFilterRef.current && !recurringFilterRef.current.contains(target)) {
+                setRecurringFilterOpen(false);
+            }
+            if (sortDropdownRef.current && !sortDropdownRef.current.contains(target)) {
+                setSortDropdownOpen(false);
             }
             if (exportMenuRef.current && !exportMenuRef.current.contains(target)) {
                 setExportMenuOpen(false);
@@ -574,6 +586,68 @@ export default function Expenses() {
                             </div>
                         )}
                     </div>
+                    <div className="relative" ref={recurringFilterRef}>
+                        <button
+                            type="button"
+                            onClick={() => setRecurringFilterOpen((o) => !o)}
+                            className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#4863D4]/20 ${filters.filterRecurring
+                                ? "border-[#4863D4] bg-[#e8ecfc] text-[#3a50b8]"
+                                : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                            }`}
+                            aria-label="Recurring filter"
+                            aria-expanded={recurringFilterOpen}
+                        >
+                            {filters.filterRecurring === "true" ? "Recurring" : filters.filterRecurring === "false" ? "Non-recurring" : "Recurring: All"}
+                            <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        {recurringFilterOpen && (
+                            <div className="absolute left-0 top-full z-20 mt-1.5 min-w-[200px] rounded-xl border border-slate-200 bg-white py-2 shadow-lg">
+                                <div className="px-2 pb-1">
+                                    {[
+                                        { value: "" as const, label: "All" },
+                                        { value: "true" as const, label: "Recurring only" },
+                                        { value: "false" as const, label: "Non-recurring only" },
+                                    ].map(({ value, label }) => (
+                                        <label
+                                            key={value || "all"}
+                                            className={`flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
+                                                filters.filterRecurring === value
+                                                    ? "bg-[#e8ecfc] text-slate-900"
+                                                    : "text-slate-700 hover:bg-slate-50"
+                                            }`}
+                                        >
+                                            <input
+                                                type="radio"
+                                                name="filterRecurring"
+                                                checked={filters.filterRecurring === value}
+                                                onChange={() => { filters.setFilterRecurring(value); setRecurringFilterOpen(false); }}
+                                                className="h-4 w-4 border-slate-300 text-[#4863D4] focus:ring-[#4863D4]"
+                                            />
+                                            {label}
+                                        </label>
+                                    ))}
+                                </div>
+                                <div className="flex items-center justify-between border-t border-slate-100 px-3 pt-2 mt-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => { filters.setFilterRecurring(""); setRecurringFilterOpen(false); }}
+                                        className="text-sm font-medium text-slate-600 hover:text-slate-900"
+                                    >
+                                        Clear
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setRecurringFilterOpen(false)}
+                                        className="text-sm font-medium text-[#4863D4] hover:text-[#3a50b8]"
+                                    >
+                                        Done
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                     {filters.hasActiveFilters && (
                         <button
                             type="button"
@@ -605,6 +679,71 @@ export default function Expenses() {
                         <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden>
                             /
                         </span>
+                    </div>
+                    <div className="relative shrink-0" ref={sortDropdownRef}>
+                        <button
+                            type="button"
+                            onClick={() => setSortDropdownOpen((o) => !o)}
+                            className={`inline-flex h-10 items-center gap-1.5 rounded-lg border px-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#4863D4]/20 ${sortBy !== "date"
+                                ? "border-[#4863D4] bg-[#e8ecfc] text-[#3a50b8]"
+                                : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+                            }`}
+                            aria-label="Sort by"
+                            aria-expanded={sortDropdownOpen}
+                        >
+                            <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+                            </svg>
+                            <span className="hidden sm:inline">Sort</span>
+                            <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        {sortDropdownOpen && (
+                            <div className="absolute left-0 top-full z-20 mt-1.5 min-w-[200px] rounded-xl border border-slate-200 bg-white py-2 shadow-lg">
+                                <div className="px-2 pb-1">
+                                    {[
+                                        { value: "date" as const, label: "Date (newest first)" },
+                                        { value: "amount_desc" as const, label: "Highest to lowest amount" },
+                                        { value: "amount_asc" as const, label: "Lowest to highest amount" },
+                                    ].map(({ value, label }) => (
+                                        <label
+                                            key={value}
+                                            className={`flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${
+                                                sortBy === value
+                                                    ? "bg-[#e8ecfc] text-slate-900"
+                                                    : "text-slate-700 hover:bg-slate-50"
+                                            }`}
+                                        >
+                                            <input
+                                                type="radio"
+                                                name="sortBy"
+                                                checked={sortBy === value}
+                                                onChange={() => { setSortBy(value); setPage(1); setSortDropdownOpen(false); }}
+                                                className="h-4 w-4 border-slate-300 text-[#4863D4] focus:ring-[#4863D4]"
+                                            />
+                                            {label}
+                                        </label>
+                                    ))}
+                                </div>
+                                <div className="flex items-center justify-between border-t border-slate-100 px-3 pt-2 mt-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setSortBy("date"); setPage(1); setSortDropdownOpen(false); }}
+                                        className="text-sm font-medium text-slate-600 hover:text-slate-900"
+                                    >
+                                        Clear
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSortDropdownOpen(false)}
+                                        className="text-sm font-medium text-[#4863D4] hover:text-[#3a50b8]"
+                                    >
+                                        Done
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                     <div className="ml-auto flex shrink-0 items-center gap-2">
                         <button
@@ -663,7 +802,32 @@ export default function Expenses() {
                 )}
 
                 {!loading && !error && expenses.length > 0 && (() => {
-                    const sorted = [...expenses].sort((a, b) => (b.date > a.date ? 1 : b.date < a.date ? -1 : b.id - a.id));
+                    const filteredByRecurring = filters.filterRecurring === "true"
+                        ? expenses.filter((e) => e.is_recurring)
+                        : filters.filterRecurring === "false"
+                            ? expenses.filter((e) => !e.is_recurring)
+                            : expenses;
+                    if (filteredByRecurring.length === 0) {
+                        return (
+                            <div className="border-t border-slate-200 py-12 text-center">
+                                <p className="text-slate-500">No expenses match the recurring filter.</p>
+                                <p className="mt-1 text-sm text-slate-400">Try changing or clearing filters.</p>
+                            </div>
+                        );
+                    }
+                    const sorted = [...filteredByRecurring].sort((a, b) => {
+                        if (sortBy === "amount_desc") {
+                            const amtA = Number(a.amount);
+                            const amtB = Number(b.amount);
+                            return amtB - amtA;
+                        }
+                        if (sortBy === "amount_asc") {
+                            const amtA = Number(a.amount);
+                            const amtB = Number(b.amount);
+                            return amtA - amtB;
+                        }
+                        return b.date > a.date ? 1 : b.date < a.date ? -1 : b.id - a.id;
+                    });
                     const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
                     const currentPage = Math.min(page, totalPages);
                     const start = (currentPage - 1) * PAGE_SIZE;
@@ -674,7 +838,7 @@ export default function Expenses() {
                         <>
                         <div className="flex flex-col gap-4 border-b border-slate-200 bg-slate-50/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                             <p className="text-sm text-slate-600">
-                                Showing <span className="font-medium">{startEntry}</span> – <span className="font-medium">{endEntry}</span> of <span className="font-medium">{expenses.length}</span> entries
+                                Showing <span className="font-medium">{startEntry}</span> – <span className="font-medium">{endEntry}</span> of <span className="font-medium">{filteredByRecurring.length}</span> entries
                             </p>
                             <div className="flex items-center gap-2">
                                 <button

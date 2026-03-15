@@ -48,6 +48,7 @@ export function useExpenseFilters(onFilterChange: (filters: ExpenseFilters) => v
     const [paymentModeSelected, setPaymentModeSelected] = useState<string[]>([]);
     const [paymentModesOpen, setPaymentModesOpen] = useState(false);
     const [filterCategoryId, setFilterCategoryId] = useState("");
+    const [filterRecurring, setFilterRecurring] = useState<"" | "true" | "false">("");
     const [searchKeyword, setSearchKeyword] = useState("");
     const [debouncedKeyword, setDebouncedKeyword] = useState("");
     const paymentModesRef = useRef<HTMLDivElement>(null);
@@ -82,6 +83,7 @@ export function useExpenseFilters(onFilterChange: (filters: ExpenseFilters) => v
         setFilterType("");
         setPaymentModeSelected([]);
         setFilterCategoryId("");
+        setFilterRecurring("");
         setSearchKeyword("");
         setDebouncedKeyword("");
         setPaymentModesOpen(false);
@@ -93,6 +95,7 @@ export function useExpenseFilters(onFilterChange: (filters: ExpenseFilters) => v
         !!filterType ||
         paymentModeSelected.length > 0 ||
         !!filterCategoryId ||
+        !!filterRecurring ||
         !!searchKeyword.trim();
 
     return {
@@ -110,6 +113,8 @@ export function useExpenseFilters(onFilterChange: (filters: ExpenseFilters) => v
         setPaymentModesOpen,
         filterCategoryId,
         setFilterCategoryId,
+        filterRecurring,
+        setFilterRecurring,
         searchKeyword,
         setSearchKeyword,
         debouncedKeyword,

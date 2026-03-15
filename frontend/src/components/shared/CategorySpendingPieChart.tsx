@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { formatAmount } from "../../utils/formatters";
+import { MONTH_NAMES } from "../../config/constants";
 import type { MonthlyAnalytics } from "../../types";
 
 const CHART_COLORS = [
@@ -12,12 +13,32 @@ const CHART_COLORS = [
     "rgb(59 130 246)",   // blue-500
 ];
 
+// Build month options: current + previous 11 months
+function getMonthOptions() {
+    const now = new Date();
+    const options: { month: number; year: number; label: string }[] = [];
+    for (let i = 0; i < 12; i++) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        options.push({
+            month: d.getMonth() + 1,
+            year: d.getFullYear(),
+            label: `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`,
+        });
+    }
+    return options;
+}
+
+const MONTH_OPTIONS = getMonthOptions();
+
 interface CategorySpendingPieChartProps {
     monthly: MonthlyAnalytics | null;
     loading?: boolean;
+    selectedMonth?: number;
+    selectedYear?: number;
+    onMonthChange?: (month: number, year: number) => void;
 }
 
-export default function CategorySpendingPieChart({ monthly, loading }: CategorySpendingPieChartProps) {
+export default function CategorySpendingPieChart({ monthly, loading, selectedMonth, selectedYear, onMonthChange }: CategorySpendingPieChartProps) {
     const chartData = useMemo(() => {
         if (!monthly?.categories?.length) return [];
         return monthly.categories
@@ -29,12 +50,37 @@ export default function CategorySpendingPieChart({ monthly, loading }: CategoryS
             }));
     }, [monthly]);
 
+    const headerContent = (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+                <h2 className="text-base font-semibold text-slate-900">Spending by category</h2>
+                <p className="mt-0.5 text-xs text-slate-500">
+                    How much you spent per category {selectedMonth && selectedYear ? `in ${MONTH_NAMES[selectedMonth - 1]} ${selectedYear}` : "this month"}
+                </p>
+            </div>
+            {onMonthChange && selectedMonth != null && selectedYear != null && (
+                <select
+                    value={MONTH_OPTIONS.find((o) => o.month === selectedMonth && o.year === selectedYear)?.label ?? MONTH_OPTIONS[0].label}
+                    onChange={(e) => {
+                        const opt = MONTH_OPTIONS.find((o) => o.label === e.target.value);
+                        if (opt) onMonthChange(opt.month, opt.year);
+                    }}
+                    aria-label="Filter by month"
+                    className="shrink-0 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 focus:border-[#4863D4] focus:outline-none focus:ring-1 focus:ring-[#4863D4]/20"
+                >
+                    {MONTH_OPTIONS.map((o) => (
+                        <option key={`${o.year}-${o.month}`} value={o.label}>{o.label}</option>
+                    ))}
+                </select>
+            )}
+        </div>
+    );
+
     if (loading) {
         return (
             <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                 <div className="border-b border-slate-200 px-5 py-4">
-                    <h2 className="text-base font-semibold text-slate-900">Spending by category</h2>
-                    <p className="mt-0.5 text-xs text-slate-500">This month</p>
+                    {headerContent}
                 </div>
                 <div className="flex aspect-square max-h-[280px] items-center justify-center p-6">
                     <div className="h-40 w-40 animate-pulse rounded-full bg-slate-100" />
@@ -47,8 +93,7 @@ export default function CategorySpendingPieChart({ monthly, loading }: CategoryS
         return (
             <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                 <div className="border-b border-slate-200 px-5 py-4">
-                    <h2 className="text-base font-semibold text-slate-900">Spending by category</h2>
-                    <p className="mt-0.5 text-xs text-slate-500">This month</p>
+                    {headerContent}
                 </div>
                 <div className="flex aspect-square max-h-[280px] items-center justify-center p-6">
                     <p className="text-center text-sm text-slate-500">No spending by category yet.</p>
@@ -60,8 +105,7 @@ export default function CategorySpendingPieChart({ monthly, loading }: CategoryS
     return (
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
             <div className="border-b border-slate-200 px-5 py-4">
-                <h2 className="text-base font-semibold text-slate-900">Spending by category</h2>
-                <p className="mt-0.5 text-xs text-slate-500">How much you spent per category this month</p>
+                {headerContent}
             </div>
             <div className="p-4">
                 <ResponsiveContainer width="100%" height={320}>

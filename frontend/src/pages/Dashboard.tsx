@@ -18,12 +18,14 @@ export default function Dashboard() {
     const currentYear = now.getFullYear();
 
     const { monthly, trend, loading: analyticsLoading, error: analyticsError, refetch: refetchAnalytics } = useAnalytics(currentMonth, currentYear, 6);
+    const [pieChartMonth, setPieChartMonth] = useState(currentMonth);
+    const [pieChartYear, setPieChartYear] = useState(currentYear);
+    const { monthly: pieChartMonthly, loading: pieChartLoading } = useAnalytics(pieChartMonth, pieChartYear, 1);
     const { expenses, loading: expensesLoading } = useExpenses();
     const { categories } = useCategories();
     const { budgets } = useBudgets();
 
     const recentExpenses = expenses.slice(0, 5);
-    const recurringExpenses = expenses.filter((e) => e.is_recurring);
     const getCategoryName = (id: number | null) =>
         id ? categories.find((c) => c.id === id)?.name ?? "—" : "—";
 
@@ -180,71 +182,17 @@ export default function Dashboard() {
                     </div>
                 </section>
 
-                <CategorySpendingPieChart monthly={monthly} loading={analyticsLoading} />
+                <CategorySpendingPieChart
+                    monthly={pieChartMonthly}
+                    loading={pieChartLoading}
+                    selectedMonth={pieChartMonth}
+                    selectedYear={pieChartYear}
+                    onMonthChange={(m, y) => { setPieChartMonth(m); setPieChartYear(y); }}
+                />
             </div>
 
-            {/* Row 2: Recurring expenses | Spending trend chart */}
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-                <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                    <div className="border-b border-slate-200 px-5 py-4">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-base font-semibold text-slate-900">Recurring expenses</h2>
-                            <Link
-                                to={ROUTES.EXPENSES}
-                                className="text-sm font-medium text-[#4863D4] hover:text-[#3a50b8]"
-                            >
-                                Manage →
-                            </Link>
-                        </div>
-                        <p className="mt-0.5 text-xs text-slate-500">Scheduled / repeating transactions</p>
-                    </div>
-                    <div className="overflow-x-auto">
-                        {expensesLoading ? (
-                            <div className="p-5">
-                                <div className="h-24 animate-pulse rounded bg-slate-100" />
-                            </div>
-                        ) : recurringExpenses.length === 0 ? (
-                            <p className="px-5 py-8 text-center text-sm text-slate-500">
-                                No recurring expenses. Mark an expense as recurring on the <Link to={ROUTES.EXPENSES} className="font-medium text-[#4863D4] hover:underline">Expenses</Link> page.
-                            </p>
-                        ) : (
-                            <table className="w-full min-w-[400px] text-left text-sm">
-                                <thead>
-                                    <tr className="border-b border-slate-200 bg-slate-50/80">
-                                        <th className="px-5 py-3 font-medium text-slate-600">Category</th>
-                                        <th className="px-5 py-3 font-medium text-slate-600">Amount</th>
-                                        <th className="px-5 py-3 font-medium text-slate-600">Period</th>
-                                        <th className="px-5 py-3 font-medium text-slate-600">Notes</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {recurringExpenses.map((exp) => (
-                                        <tr key={exp.id} className="hover:bg-slate-50/50">
-                                            <td className="px-5 py-3 font-medium text-slate-800">
-                                                {getCategoryName(exp.category_id)}
-                                            </td>
-                                            <td className="px-5 py-3 tabular-nums">
-                                                <span className={exp.transaction_type === "in" ? "text-[#4863D4]" : "text-slate-900"}>
-                                                    {exp.transaction_type === "in" ? "+" : ""}{formatAmount(Number(exp.amount))}
-                                                </span>
-                                                <span className="ml-1 text-xs text-slate-400">({exp.payment_mode})</span>
-                                            </td>
-                                            <td className="px-5 py-3 capitalize text-slate-600">
-                                                {exp.recurrence_period ?? "—"}
-                                            </td>
-                                            <td className="max-w-[180px] truncate px-5 py-3 text-slate-500" title={exp.notes ?? undefined}>
-                                                {exp.notes ?? "—"}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        )}
-                    </div>
-                </section>
-
-                <SpendingTrendChart trend={trend} loading={analyticsLoading} />
-            </div>
+            {/* Spending trend chart */}
+            <SpendingTrendChart trend={trend} loading={analyticsLoading} />
         </div>
     );
 }
