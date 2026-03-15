@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { CashFlowSummaryCard, ExpenseFormModal } from "../components/shared";
+import { CashFlowSummaryCard, ConfirmModal, ExpenseFormModal, PageHeader } from "../components/shared";
 import { DatePicker } from "../components/ui/DatePicker";
 import { useExpenses } from "../hooks/useExpenses";
 import { useExpenseFilters } from "../hooks/useExpenseFilters";
@@ -7,8 +7,9 @@ import { useCategories } from "../hooks/useCategories";
 import type { Expense } from "../types";
 import type { ExpensePayload, ExpenseFilters } from "../api/expenses";
 import { exportExpensesToCSV, exportExpensesToExcel, exportExpensesToPDF } from "../utils/exportExpenses";
-
-const PAYMENT_MODES = ["UPI", "CASH"] as const;
+import { formatDateLabel } from "../utils/formatters";
+import { PAYMENT_MODES } from "../config/constants";
+import { input, btnPrimary, btnSecondary } from "../styles/ui";
 
 const defaultPayload: ExpensePayload = {
     amount: "",
@@ -33,27 +34,7 @@ function payloadFromExpense(e: Expense): ExpensePayload {
     };
 }
 
-function formatDateGroup(dateStr: string): string {
-    const d = new Date(dateStr);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const dDay = new Date(d);
-    dDay.setHours(0, 0, 0, 0);
-    if (dDay.getTime() === today.getTime()) return "Today";
-    if (dDay.getTime() === yesterday.getTime()) return "Yesterday";
-    return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-}
-
 const PAGE_SIZE = 10;
-
-const inputClass =
-    "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder-slate-400 focus:border-[#4863D4] focus:outline-none focus:ring-2 focus:ring-[#4863D4]/20 text-sm";
-const btnPrimary =
-    "rounded-lg bg-[#4863D4] px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#3a50b8] focus:outline-none focus:ring-2 focus:ring-[#4863D4] focus:ring-offset-2 disabled:opacity-50";
-const btnSecondary =
-    "rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#4863D4] focus:ring-offset-2";
 
 export default function Expenses() {
     const { categories } = useCategories();
@@ -204,68 +185,66 @@ export default function Expenses() {
 
     return (
         <div className="space-y-6">
-            {/* 1. Page header: title, summary, Export */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-900">Expenses</h1>
-                </div>
-                <div className="relative shrink-0 sm:ml-auto" ref={exportMenuRef}>
-                    <button
-                        type="button"
-                        onClick={() => setExportMenuOpen((o) => !o)}
-                        className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#4863D4] focus:ring-offset-2"
-                        aria-expanded={exportMenuOpen}
-                        aria-haspopup="true"
-                    >
-                        Export
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                        <svg className={`h-4 w-4 transition-transform ${exportMenuOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </button>
-                    {exportMenuOpen && (
-                        <div className="absolute right-0 top-full z-10 mt-1 min-w-[180px] rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    exportExpensesToCSV(expenses, categories);
-                                    setExportMenuOpen(false);
-                                }}
-                                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
-                            >
-                                <span className="text-slate-500">.csv</span>
-                                Download as CSV
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    exportExpensesToExcel(expenses, categories);
-                                    setExportMenuOpen(false);
-                                }}
-                                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
-                            >
-                                <span className="text-slate-500">.xlsx</span>
-                                Download as Excel
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    exportExpensesToPDF(expenses, categories);
-                                    setExportMenuOpen(false);
-                                }}
-                                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
-                            >
-                                <span className="text-slate-500">.pdf</span>
-                                Download as PDF
-                            </button>
-                        </div>
-                    )}
-                </div>
-            </div>
+            <PageHeader
+                title="Expenses"
+                actions={
+                    <div className="relative shrink-0" ref={exportMenuRef}>
+                        <button
+                            type="button"
+                            onClick={() => setExportMenuOpen((o) => !o)}
+                            className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#4863D4] focus:ring-offset-2"
+                            aria-expanded={exportMenuOpen}
+                            aria-haspopup="true"
+                        >
+                            Export
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            <svg className={`h-4 w-4 transition-transform ${exportMenuOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        {exportMenuOpen && (
+                            <div className="absolute right-0 top-full z-10 mt-1 min-w-[180px] rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        exportExpensesToCSV(expenses, categories);
+                                        setExportMenuOpen(false);
+                                    }}
+                                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+                                >
+                                    <span className="text-slate-500">.csv</span>
+                                    Download as CSV
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        exportExpensesToExcel(expenses, categories);
+                                        setExportMenuOpen(false);
+                                    }}
+                                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+                                >
+                                    <span className="text-slate-500">.xlsx</span>
+                                    Download as Excel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        exportExpensesToPDF(expenses, categories);
+                                        setExportMenuOpen(false);
+                                    }}
+                                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+                                >
+                                    <span className="text-slate-500">.pdf</span>
+                                    Download as PDF
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                }
+            />
 
-            {/* Add transaction modal (Cash In / Cash Out) */}
             {showAddForm && (
                 <ExpenseFormModal
                     title={showAddForm === "in" ? "Cash In" : "Cash Out"}
@@ -284,7 +263,6 @@ export default function Expenses() {
                 />
             )}
 
-            {/* Cash In / Cash Out / Net Balance summary (for current filtered list) */}
             {(() => {
                 const cashIn = expenses.filter((e) => e.transaction_type === "in").reduce((s, e) => s + Number(e.amount), 0);
                 const cashOut = expenses.filter((e) => e.transaction_type === "out").reduce((s, e) => s + Number(e.amount), 0);
@@ -293,7 +271,6 @@ export default function Expenses() {
                 );
             })()}
 
-            {/* 3. Filters + Table: single card */}
             <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                 <div className="space-y-3 border-b border-slate-200 p-4">
                     <div className="flex flex-wrap items-center gap-2">
@@ -778,7 +755,6 @@ export default function Expenses() {
                     </div>
                 </div>
 
-                {/* 4. Expense list (table with pagination) - same card */}
                 {loading && (
                     <div className="py-12 text-center text-slate-500">
                         Loading…
@@ -910,26 +886,15 @@ export default function Expenses() {
                 })()}
             </div>
 
-            {/* Delete modal */}
             {deleteId !== null && (
-                <div className="fixed inset-0 z-50 flex min-h-screen items-center justify-center bg-black/25 p-4">
-                    <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-6 shadow-xl">
-                        <p className="text-slate-700">Delete this expense? This cannot be undone.</p>
-                        <div className="mt-6 flex gap-3">
-                            <button type="button" onClick={() => setDeleteId(null)} className={btnSecondary + " flex-1"}>
-                                Cancel
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => handleDelete(deleteId)}
-                                disabled={deleting}
-                                className="flex-1 rounded-lg bg-red-600 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-red-700 disabled:opacity-50"
-                            >
-                                {deleting ? "Deleting…" : "Delete"}
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <ConfirmModal
+                    message="Delete this expense? This cannot be undone."
+                    confirmLabel={deleting ? "Deleting…" : "Delete"}
+                    cancelLabel="Cancel"
+                    loading={deleting}
+                    onConfirm={() => handleDelete(deleteId)}
+                    onCancel={() => setDeleteId(null)}
+                />
             )}
         </div>
     );
@@ -951,7 +916,7 @@ function ExpenseTableRow({
         : "—";
     return (
         <tr className="transition-colors hover:bg-slate-50/80">
-            <td className="px-4 py-3 text-slate-700">{formatDateGroup(expense.date)}</td>
+            <td className="px-4 py-3 text-slate-700">{formatDateLabel(expense.date)}</td>
             <td className="px-4 py-3">
                 <div className="flex flex-wrap items-center gap-1.5">
                     {expense.notes ? (
@@ -1026,7 +991,7 @@ function ExpenseEditForm({
                         inputMode="decimal"
                         value={form.amount}
                         onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
-                        className={inputClass}
+                        className={input}
                     />
                 </label>
                 <div className="block">
@@ -1048,7 +1013,7 @@ function ExpenseEditForm({
                                 category_id: e.target.value ? Number(e.target.value) : null,
                             }))
                         }
-                        className={inputClass}
+                        className={input}
                     >
                         <option value="">None</option>
                         {categories.map((c) => (
@@ -1063,7 +1028,7 @@ function ExpenseEditForm({
                     <select
                         value={form.payment_mode ?? "CASH"}
                         onChange={(e) => setForm((f) => ({ ...f, payment_mode: e.target.value }))}
-                        className={inputClass}
+                        className={input}
                     >
                         {PAYMENT_MODES.map((mode) => (
                             <option key={mode} value={mode}>{mode}</option>
@@ -1075,7 +1040,7 @@ function ExpenseEditForm({
                     <select
                         value={form.transaction_type ?? "out"}
                         onChange={(e) => setForm((f) => ({ ...f, transaction_type: e.target.value as "in" | "out" }))}
-                        className={inputClass}
+                        className={input}
                     >
                         <option value="out">Cash Out</option>
                         <option value="in">Cash In</option>
@@ -1087,7 +1052,7 @@ function ExpenseEditForm({
                         type="text"
                         value={form.notes ?? ""}
                         onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-                        className={inputClass}
+                        className={input}
                     />
                 </label>
             </div>

@@ -1,4 +1,4 @@
-import api from "../api";
+import api from "./client";
 
 export async function getCategories() {
     const res = await api.get("/categories");

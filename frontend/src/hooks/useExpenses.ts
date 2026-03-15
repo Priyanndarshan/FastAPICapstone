@@ -1,34 +1,25 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import * as expensesApi from "../api/expenses";
 import type { ExpenseFilters, ExpensePayload } from "../api/expenses";
 import type { Expense } from "../types";
 import { parseApiError } from "../utils/parseApiError";
+import { useAsyncState } from "./useAsyncState";
 
 export function useExpenses(initialFilters?: ExpenseFilters) {
-    const [expenses, setExpenses] = useState<Expense[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
-
-    async function fetchExpenses(filters?: ExpenseFilters) {
-        setLoading(true);
-        setError("");
-        try {
-            setExpenses(await expensesApi.getExpenses(filters));
-        } catch (err) {
-            setError(parseApiError(err, "Failed to load expenses."));
-        } finally {
-            setLoading(false);
-        }
-    }
+    const { data: expenses, loading, error, run, setData } = useAsyncState<Expense[]>([]);
 
     useEffect(() => {
         fetchExpenses(initialFilters);
     }, []);
 
+    async function fetchExpenses(filters?: ExpenseFilters) {
+        await run(() => expensesApi.getExpenses(filters));
+    }
+
     async function addExpense(payload: ExpensePayload) {
         try {
             const expense = await expensesApi.createExpense(payload);
-            setExpenses((prev) => [...prev, expense]);
+            setData((prev) => [expense, ...prev]);
         } catch (err) {
             throw new Error(parseApiError(err, "Failed to add expense."));
         }
@@ -37,7 +28,7 @@ export function useExpenses(initialFilters?: ExpenseFilters) {
     async function updateExpense(id: number, payload: Partial<ExpensePayload>) {
         try {
             const expense = await expensesApi.updateExpense(id, payload);
-            setExpenses((prev) => prev.map((e) => (e.id === id ? expense : e)));
+            setData((prev) => prev.map((e) => (e.id === id ? expense : e)));
         } catch (err) {
             throw new Error(parseApiError(err, "Failed to update expense."));
         }
@@ -46,7 +37,7 @@ export function useExpenses(initialFilters?: ExpenseFilters) {
     async function removeExpense(id: number) {
         try {
             await expensesApi.deleteExpense(id);
-            setExpenses((prev) => prev.filter((e) => e.id !== id));
+            setData((prev) => prev.filter((e) => e.id !== id));
         } catch (err) {
             throw new Error(parseApiError(err, "Failed to delete expense."));
         }

@@ -73,7 +73,6 @@ export function useExpenseFilters(onFilterChange: (filters: ExpenseFilters) => v
         if (filterCategoryId) next.category_id = Number(filterCategoryId);
         if (debouncedKeyword.trim()) next.keyword = debouncedKeyword.trim();
         onFilterChange(next);
-        // eslint-disable-next-line react-hooks/exhaustive-deps -- onFilterChange is intentionally excluded to avoid refetch loops
     }, [duration, filterStart, filterEnd, filterType, paymentModeSelected, filterCategoryId, debouncedKeyword]);
 
     function clearFilters() {

@@ -1,13 +1,12 @@
 import { useState, useMemo } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { Link } from "react-router-dom";
-import { ROUTES } from "../config/constants";
-import { SpendingTrendChart, CategorySpendingPieChart } from "../components/shared";
+import { ROUTES, MONTH_NAMES } from "../config/constants";
+import { PageHeader, SpendingTrendChart, CategorySpendingPieChart } from "../components/shared";
 import { useAnalytics } from "../hooks/useAnalytics";
 import { useExpenses } from "../hooks/useExpenses";
 import { useCategories } from "../hooks/useCategories";
 import { useBudgets } from "../hooks/useBudgets";
-import { MONTH_NAMES } from "../config/constants";
 import { formatAmount } from "../utils/formatters";
 
 export default function Dashboard() {
@@ -76,25 +75,21 @@ export default function Dashboard() {
 
     return (
         <div className="space-y-8">
-            {/* Header + period + quick stats */}
-            <header>
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                    {user ? `Welcome, ${user.name?.trim() || user.email || "User"}` : "Dashboard"}
-                </h1>
-                <p className="mt-1 text-sm text-slate-500">
-                    {periodLabel}
-                </p>
-                <div className="mt-4 flex flex-wrap items-center gap-3">
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
-                        {thisMonthCount} transaction{thisMonthCount !== 1 ? "s" : ""} this month
-                    </span>
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
-                        {categories.length} categor{categories.length === 1 ? "y" : "ies"}
-                    </span>
-                </div>
-            </header>
+            <PageHeader
+                title={user ? `Welcome, ${user.name?.trim() || user.email || "User"}` : "Dashboard"}
+                description={periodLabel}
+                badge={
+                    <>
+                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+                            {thisMonthCount} transaction{thisMonthCount !== 1 ? "s" : ""} this month
+                        </span>
+                        <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+                            {categories.length} categor{categories.length === 1 ? "y" : "ies"}
+                        </span>
+                    </>
+                }
+            />
 
-            {/* Dismissible warning when budget exceeded */}
             {overBudgetCategories.length > 0 && !budgetWarningDismissed && (
                 <div className="flex items-center gap-4 rounded-xl border border-red-200 bg-red-50 px-5 py-3">
                     <p className="flex-1 min-w-0 text-sm font-medium text-red-800">
@@ -129,7 +124,6 @@ export default function Dashboard() {
                 </div>
             )}
 
-            {/* Row 1: Recent expenses | Spending by category */}
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
                 <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                     <div className="border-b border-slate-200 px-5 py-4">
@@ -191,7 +185,6 @@ export default function Dashboard() {
                 />
             </div>
 
-            {/* Spending trend chart */}
             <SpendingTrendChart trend={trend} loading={analyticsLoading} />
         </div>
     );

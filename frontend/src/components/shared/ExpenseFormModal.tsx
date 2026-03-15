@@ -1,15 +1,8 @@
 import type { ExpensePayload } from "../../api/expenses";
 import type { Category } from "../../types";
 import { DatePicker } from "../ui/DatePicker";
-
-const PAYMENT_MODES = ["UPI", "CASH"] as const;
-
-const inputClass =
-    "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder-slate-400 focus:border-[#4863D4] focus:outline-none focus:ring-2 focus:ring-[#4863D4]/20 text-sm";
-const btnPrimary =
-    "rounded-lg bg-[#4863D4] px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#3a50b8] focus:outline-none focus:ring-2 focus:ring-[#4863D4] focus:ring-offset-2 disabled:opacity-50";
-const btnSecondary =
-    "rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#4863D4] focus:ring-offset-2";
+import { PAYMENT_MODES } from "../../config/constants";
+import { input, btnPrimary, btnSecondary } from "../../styles/ui";
 
 export interface ExpenseFormModalProps {
     title: string;
@@ -67,7 +60,7 @@ export default function ExpenseFormModal({
                                     value={form.amount}
                                     onChange={(e) => onChange((f) => ({ ...f, amount: e.target.value }))}
                                     placeholder="0.00"
-                                    className={inputClass}
+                                    className={input}
                                 />
                             </label>
                             <div className="block">
@@ -89,7 +82,7 @@ export default function ExpenseFormModal({
                                             category_id: e.target.value ? Number(e.target.value) : null,
                                         }))
                                     }
-                                    className={inputClass}
+                                    className={input}
                                 >
                                     <option value="">None</option>
                                     {categories.map((c) => (
@@ -104,7 +97,7 @@ export default function ExpenseFormModal({
                                 <select
                                     value={form.payment_mode ?? "CASH"}
                                     onChange={(e) => onChange((f) => ({ ...f, payment_mode: e.target.value }))}
-                                    className={inputClass}
+                                    className={input}
                                 >
                                     {PAYMENT_MODES.map((mode) => (
                                         <option key={mode} value={mode}>{mode}</option>
@@ -119,7 +112,7 @@ export default function ExpenseFormModal({
                                 value={form.notes ?? ""}
                                 onChange={(e) => onChange((f) => ({ ...f, notes: e.target.value }))}
                                 placeholder="Optional"
-                                className={inputClass}
+                                className={input}
                             />
                         </label>
                         <label className="mt-3 flex items-center gap-2 text-sm text-slate-700">

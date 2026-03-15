@@ -6,7 +6,6 @@ export async function register(name: string, email: string, password: string, ph
 }
 
 export async function login(email: string, password: string) {
-    // Backend expects application/x-www-form-urlencoded (OAuth2PasswordRequestForm)
     const form = new URLSearchParams();
     form.append("username", email); // FastAPI OAuth2 form uses "username" for email
     form.append("password", password);
@@ -30,7 +29,6 @@ export async function updateProfile(data: { name?: string; phone?: string | null
 
 export async function logout() {
     const refresh_token = localStorage.getItem("refresh_token");
-    // Backend expects JSON body { "refresh_token": "..." }, not query param
     if (refresh_token) {
         await api.post("/auth/logout", { refresh_token });
     }

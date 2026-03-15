@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import { ROUTES } from "../config/constants";
+import { parseApiError } from "../utils/parseApiError";
 
 export default function Login() {
     const { login } = useAuth();
@@ -16,8 +17,8 @@ export default function Login() {
         try {
             await login(email, password);
             navigate(ROUTES.DASHBOARD);
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err) {
+            setError(parseApiError(err, "Invalid email or password."));
         }
     }
 

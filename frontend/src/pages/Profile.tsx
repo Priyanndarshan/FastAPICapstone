@@ -2,9 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { ROUTES } from "../config/constants";
-
-const inputClass =
-  "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-[#4863D4] focus:outline-none focus:ring-2 focus:ring-[#4863D4]/20 text-sm";
+import { input } from "../styles/ui";
 
 function ProfileField({
   label,
@@ -64,7 +62,7 @@ function ProfileField({
             type="text"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            className={inputClass + " flex-1 border border-slate-300 sm:min-w-0"}
+            className={input + " flex-1 sm:min-w-0"}
             autoFocus
             aria-label={label}
           />

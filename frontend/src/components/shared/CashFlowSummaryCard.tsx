@@ -24,7 +24,6 @@ export default function CashFlowSummaryCard({ cashIn, cashOut, loading }: CashFl
 
     return (
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-            {/* Cash In */}
             <div className="rounded-xl bg-emerald-50/80 px-3 py-2.5 ring-1 ring-emerald-200/60">
                 <div className="flex items-center gap-1.5">
                     <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-emerald-500/15 text-emerald-600">
@@ -39,7 +38,6 @@ export default function CashFlowSummaryCard({ cashIn, cashOut, loading }: CashFl
                 </p>
             </div>
 
-            {/* Cash Out */}
             <div className="rounded-xl bg-red-50/80 px-3 py-2.5 ring-1 ring-red-200/60">
                 <div className="flex items-center gap-1.5">
                     <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-red-500/15 text-red-600">
@@ -54,7 +52,6 @@ export default function CashFlowSummaryCard({ cashIn, cashOut, loading }: CashFl
                 </p>
             </div>
 
-            {/* Net Balance */}
             <div className="rounded-xl bg-slate-100/80 px-3 py-2.5 ring-1 ring-slate-200/60">
                 <div className="flex items-center gap-1.5">
                     <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-slate-300/50 text-slate-600">

@@ -1,4 +1,3 @@
-// src/api/expenses.ts
 import client from "./client";
 import type { Expense } from "../types";
 

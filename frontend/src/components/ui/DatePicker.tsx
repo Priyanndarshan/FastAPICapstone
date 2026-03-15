@@ -20,14 +20,11 @@ function fromDate(d: Date): string {
 }
 
 export interface DatePickerProps {
-  /** Value as YYYY-MM-DD string */
   value: string;
-  /** Called with YYYY-MM-DD when user selects a date */
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
   id?: string;
-  /** Accessibility label for the trigger (e.g. "From date", "To date") */
   "aria-label"?: string;
 }
 

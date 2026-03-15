@@ -1,4 +1,3 @@
-// src/utils/parseApiError.ts
 
 export function parseApiError(err: unknown, fallback = "Something went wrong"): string {
     const e = err as { response?: { data?: { detail?: string | { msg: string }[] } } };

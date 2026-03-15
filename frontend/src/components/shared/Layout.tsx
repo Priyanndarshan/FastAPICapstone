@@ -1,7 +1,7 @@
 import Navbar from "./Navbar";
 import TopNav from "./TopNav";
 
-const TOP_NAV_HEIGHT = "3.5rem"; /* h-14 */
+const TOP_NAV_HEIGHT = "3.5rem";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
     return (

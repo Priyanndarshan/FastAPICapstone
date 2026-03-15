@@ -13,7 +13,6 @@ const CHART_COLORS = [
     "rgb(59 130 246)",   // blue-500
 ];
 
-// Build month options: current + previous 11 months
 function getMonthOptions() {
     const now = new Date();
     const options: { month: number; year: number; label: string }[] = [];

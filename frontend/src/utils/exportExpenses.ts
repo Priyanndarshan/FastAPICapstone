@@ -8,7 +8,6 @@ function getCategoryName(categoryId: number | null, categories: Category[]): str
     return categories.find((c) => c.id === categoryId)?.name ?? "";
 }
 
-/** Escape a CSV field (wrap in quotes if needed, escape internal quotes) */
 function csvEscape(value: string): string {
     if (value.includes(",") || value.includes('"') || value.includes("\n") || value.includes("\r")) {
         return `"${value.replace(/"/g, '""')}"`;
@@ -16,10 +15,6 @@ function csvEscape(value: string): string {
     return value;
 }
 
-/**
- * Export expenses as CSV and trigger download.
- * Uses current filtered list; columns: Date, Type, Category, Mode, Amount, Notes, Recurring.
- */
 export function exportExpensesToCSV(expenses: Expense[], categories: Category[]): void {
     const headers = ["Date", "Type", "Category", "Payment Mode", "Amount", "Notes", "Recurring"];
     const rows = expenses.map((e) => [
@@ -42,10 +37,6 @@ export function exportExpensesToCSV(expenses: Expense[], categories: Category[])
     URL.revokeObjectURL(url);
 }
 
-/**
- * Export expenses as Excel (.xlsx) and trigger download.
- * Uses current filtered list; same columns as CSV.
- */
 export function exportExpensesToExcel(expenses: Expense[], categories: Category[]): void {
     const rows = expenses.map((e) => ({
         Date: e.date,
@@ -62,10 +53,6 @@ export function exportExpensesToExcel(expenses: Expense[], categories: Category[
     XLSX.writeFile(workbook, `expenses-${new Date().toISOString().slice(0, 10)}.xlsx`);
 }
 
-/**
- * Export expenses as PDF and trigger download.
- * Uses current filtered list; same columns as CSV/Excel.
- */
 export function exportExpensesToPDF(expenses: Expense[], categories: Category[]): void {
     const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
     const headers = ["Date", "Type", "Category", "Payment Mode", "Amount", "Notes", "Recurring"];

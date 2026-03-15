@@ -1,19 +1,7 @@
-"""Expense routes (HTTP endpoints).
-
-Endpoints (all require auth):
-- GET    /expenses           List expenses (filters: start_date, end_date, category_id, keyword)
-- POST   /expenses           Create a new expense
-- GET    /expenses/{id}      Get a single expense
-- PUT    /expenses/{id}      Update an expense
-- DELETE /expenses/{id}      Delete an expense
-"""
-
 from datetime import date
-from typing import List, Optional
-
+from typing import Optional
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-
 from app.dependencies.auth_dependency import get_current_user
 from app.dependencies.db_dependency import get_db
 from app.models.user_model import User
@@ -25,11 +13,7 @@ from app.services.expense_service import (
     list_user_expenses,
     update_user_expense,
 )
-
-
 router = APIRouter(prefix="/expenses", tags=["Expenses"])
-
-
 @router.get("", response_model=list[ExpenseResponse])
 def list_expenses(
     start_date: Optional[date] = Query(default=None),
@@ -41,9 +25,6 @@ def list_expenses(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    modes = [m.strip() for m in payment_modes.split(",")] if payment_modes else None
-    if modes:
-        modes = [m for m in modes if m]
     return list_user_expenses(
         db,
         current_user.id,
@@ -52,10 +33,8 @@ def list_expenses(
         category_id=category_id,
         keyword=keyword,
         transaction_type=transaction_type,
-        payment_modes=modes,
+        payment_modes=payment_modes,
     )
-
-
 @router.post("", response_model=ExpenseResponse)
 def create_expense(
     body: ExpenseCreate,
@@ -63,8 +42,6 @@ def create_expense(
     db: Session = Depends(get_db),
 ):
     return create_user_expense(db, current_user.id, payload=body.model_dump())
-
-
 @router.get("/{expense_id}", response_model=ExpenseResponse)
 def get_expense(
     expense_id: int,
@@ -72,8 +49,6 @@ def get_expense(
     db: Session = Depends(get_db),
 ):
     return get_user_expense(db, current_user.id, expense_id)
-
-
 @router.put("/{expense_id}", response_model=ExpenseResponse)
 def update_expense(
     expense_id: int,
@@ -83,8 +58,6 @@ def update_expense(
 ):
     updates = body.model_dump(exclude_unset=True)
     return update_user_expense(db, current_user.id, expense_id, updates=updates)
-
-
 @router.delete("/{expense_id}")
 def remove_expense(
     expense_id: int,
@@ -92,4 +65,3 @@ def remove_expense(
     db: Session = Depends(get_db),
 ):
     return delete_user_expense(db, current_user.id, expense_id)
-

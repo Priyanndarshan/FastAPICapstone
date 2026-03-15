@@ -1,4 +1,3 @@
-// src/types/index.ts
 
 export interface User {
     id: number;
@@ -32,14 +31,12 @@ export interface Budget {
     limit_amount: string;  // Decimal from API
 }
 
-/** Per-category total for a month (from GET /analytics/monthly) */
 export interface MonthlyCategoryBreakdown {
     category_id: number | null;
     category_name: string | null;
     total_amount: string;
 }
 
-/** Monthly analytics for a given month/year */
 export interface MonthlyAnalytics {
     month: number;
     year: number;
@@ -47,7 +44,6 @@ export interface MonthlyAnalytics {
     categories: MonthlyCategoryBreakdown[];
 }
 
-/** Top spending category for a month (from GET /analytics/top-category) */
 export interface TopCategory {
     month: number;
     year: number;
@@ -56,7 +52,6 @@ export interface TopCategory {
     total_amount: string;
 }
 
-/** Single point in spending trend (from GET /analytics/trend) */
 export interface TrendPoint {
     month: number;
     year: number;
