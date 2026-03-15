@@ -7,12 +7,15 @@ export interface ExpenseFilters {
     end_date?: string;
     category_id?: number;
     keyword?: string;
+    transaction_type?: "in" | "out";
+    payment_modes?: string; // comma-separated e.g. "UPI,CASH"
 }
 
 export interface ExpensePayload {
     category_id?: number | null;
     amount: string;
-    currency?: string;
+    payment_mode?: string;
+    transaction_type?: "in" | "out";
     date: string;
     notes?: string | null;
     is_recurring: boolean;

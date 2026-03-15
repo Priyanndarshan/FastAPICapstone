@@ -68,53 +68,65 @@ export default function Categories() {
         }
     }
 
+    const inputClass =
+        "w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 placeholder-slate-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20";
+    const btnPrimary =
+        "rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 disabled:opacity-50";
+    const btnSecondary =
+        "rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2";
+
     return (
-        <div className="p-6">
-            <h1 className="mb-6 text-xl font-semibold text-gray-800">Categories</h1>
+        <div>
+            <h1 className="mb-2 text-2xl font-bold tracking-tight text-slate-900">Categories</h1>
+            <p className="mb-8 text-slate-600">Organize expenses by category</p>
 
             {/* Add form */}
-            <form onSubmit={handleAdd} className="mb-6 flex gap-2">
-                <input
-                    ref={addInputRef}
-                    type="text"
-                    value={addName}
-                    onChange={(e) => setAddName(e.target.value)}
-                    placeholder="New category name"
-                    maxLength={100}
-                    className="flex-1 rounded border border-gray-300 px-3 py-2 text-gray-900 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
-                />
-                <button
-                    type="submit"
-                    disabled={adding || !addName.trim()}
-                    className="rounded bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50"
-                >
-                    {adding ? "Adding…" : "Add"}
-                </button>
-            </form>
-            {addError && <p className="mb-4 text-sm text-red-600">{addError}</p>}
+            <div className="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">New category</h2>
+                <form onSubmit={handleAdd} className="flex flex-col gap-4 sm:flex-row sm:items-end">
+                    <label className="flex-1">
+                        <span className="sr-only">Category name</span>
+                        <input
+                            ref={addInputRef}
+                            type="text"
+                            value={addName}
+                            onChange={(e) => setAddName(e.target.value)}
+                            placeholder="e.g. Groceries, Transport"
+                            maxLength={100}
+                            className={inputClass}
+                        />
+                    </label>
+                    <button type="submit" disabled={adding || !addName.trim()} className={btnPrimary}>
+                        {adding ? "Adding…" : "Add category"}
+                    </button>
+                </form>
+                {addError && <p className="mt-3 text-sm text-red-600">{addError}</p>}
+            </div>
 
             {/* List states */}
-            {loading && <p className="text-gray-500">Loading…</p>}
+            {loading && (
+                <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-slate-500 shadow-sm">
+                    Loading…
+                </div>
+            )}
 
             {!loading && error && (
-                <div>
-                    <p className="text-red-600">{error}</p>
-                    <button
-                        type="button"
-                        onClick={refetch}
-                        className="mt-2 text-sm text-violet-600 hover:underline"
-                    >
+                <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center">
+                    <p className="text-red-700">{error}</p>
+                    <button type="button" onClick={refetch} className="mt-3 text-sm font-medium text-violet-600 hover:underline">
                         Try again
                     </button>
                 </div>
             )}
 
             {!loading && !error && categories.length === 0 && (
-                <p className="text-gray-500">No categories yet. Add one above.</p>
+                <div className="rounded-xl border border-dashed border-slate-300 bg-white p-12 text-center text-slate-500 shadow-sm">
+                    No categories yet. Add one above to get started.
+                </div>
             )}
 
             {!loading && !error && categories.length > 0 && (
-                <ul className="space-y-2">
+                <ul className="space-y-3">
                     {categories.map((cat) => (
                         <li key={cat.id}>
                             <CategoryRow
@@ -144,16 +156,16 @@ export default function Categories() {
 
             {/* Delete confirm modal */}
             {deleteId !== null && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
-                    <div className="max-w-sm rounded-lg border border-gray-200 bg-white p-4 shadow-lg">
-                        <p className="text-gray-800">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
+                    <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl">
+                        <p className="text-slate-700">
                             Delete &quot;{categories.find((c) => c.id === deleteId)?.name}&quot;? Expenses may lose their category.
                         </p>
-                        <div className="mt-4 flex gap-2">
+                        <div className="mt-6 flex gap-3">
                             <button
                                 type="button"
                                 onClick={() => setDeleteId(null)}
-                                className="flex-1 rounded border border-gray-300 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                                className={btnSecondary + " flex-1"}
                             >
                                 Cancel
                             </button>
@@ -161,7 +173,7 @@ export default function Categories() {
                                 type="button"
                                 onClick={() => handleDelete(deleteId)}
                                 disabled={deleting}
-                                className="flex-1 rounded bg-red-600 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                                className="flex-1 rounded-lg bg-red-600 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-red-700 disabled:opacity-50"
                             >
                                 {deleting ? "Deleting…" : "Delete"}
                             </button>
@@ -206,9 +218,12 @@ function CategoryRow({
         if (isEditing) inputRef.current?.focus();
     }, [isEditing]);
 
+    const inputClass =
+        "w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20";
+
     if (isEditing) {
         return (
-            <div className="rounded border border-gray-200 bg-gray-50 p-3">
+            <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
                 <input
                     ref={inputRef}
                     type="text"
@@ -219,23 +234,19 @@ function CategoryRow({
                         if (e.key === "Enter") onSaveEdit();
                         if (e.key === "Escape") onCancelEdit();
                     }}
-                    className="mb-2 w-full rounded border border-gray-300 px-3 py-2 text-gray-900 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                    className={inputClass + " mb-3"}
                 />
-                {editError && <p className="mb-2 text-sm text-red-600">{editError}</p>}
+                {editError && <p className="mb-3 text-sm text-red-600">{editError}</p>}
                 <div className="flex gap-2">
                     <button
                         type="button"
                         onClick={onSaveEdit}
                         disabled={saving || !editName.trim()}
-                        className="rounded bg-violet-600 px-3 py-1.5 text-sm text-white hover:bg-violet-700 disabled:opacity-50"
+                        className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-violet-700 disabled:opacity-50"
                     >
                         {saving ? "Saving…" : "Save"}
                     </button>
-                    <button
-                        type="button"
-                        onClick={onCancelEdit}
-                        className="rounded border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
-                    >
+                    <button type="button" onClick={onCancelEdit} className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
                         Cancel
                     </button>
                 </div>
@@ -244,20 +255,20 @@ function CategoryRow({
     }
 
     return (
-        <div className="flex items-center justify-between rounded border border-gray-200 bg-white px-3 py-2">
-            <span className="text-gray-800">{cat.name}</span>
+        <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm transition-shadow hover:shadow">
+            <span className="font-medium text-slate-800">{cat.name}</span>
             <div className="flex gap-2">
                 <button
                     type="button"
                     onClick={onEdit}
-                    className="text-sm text-violet-600 hover:underline"
+                    className="rounded-md px-3 py-1.5 text-sm font-medium text-violet-600 hover:bg-violet-50"
                 >
                     Edit
                 </button>
                 <button
                     type="button"
                     onClick={onDeleteClick}
-                    className="text-sm text-red-600 hover:underline"
+                    className="rounded-md px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50"
                 >
                     Delete
                 </button>

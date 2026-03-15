@@ -5,6 +5,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Categories from "./pages/Categories";
 import Expenses from "./pages/Expenses";
+import Budgets from "./pages/Budgets";
 import Layout from "./components/shared/Layout";
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -29,6 +30,7 @@ export default function App() {
         <Routes>
           <Route path="/categories" element={<PrivateRoute><Categories /></PrivateRoute>} />
           <Route path="/expenses" element={<PrivateRoute><Expenses /></PrivateRoute>} />
+          <Route path="/budgets" element={<PrivateRoute><Budgets /></PrivateRoute>} />
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
           <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />

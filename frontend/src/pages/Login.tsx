@@ -21,36 +21,54 @@ export default function Login() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4">
-            <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-                <h1 className="text-xl font-semibold text-gray-800">Log in</h1>
-                <input
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    placeholder="Email"
-                    type="email"
-                    className="w-full rounded border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
-                />
-                <input
-                    value={password}
-                    onChange={e => setPassword(e.target.value)}
-                    placeholder="Password"
-                    type="password"
-                    className="w-full rounded border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-400 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
-                />
-                {error && <p className="text-sm text-red-600">{error}</p>}
-                <button
-                    type="submit"
-                    className="w-full rounded bg-violet-600 px-4 py-2 font-medium text-white hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
+        <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-12">
+            <div className="w-full max-w-md">
+                <div className="mb-8 text-center">
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900">Expense Manager</h1>
+                    <p className="mt-1 text-sm text-slate-600">Sign in to your account</p>
+                </div>
+                <form
+                    onSubmit={handleSubmit}
+                    className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm"
                 >
-                    Login
-                </button>
-                <p className="text-center text-sm text-gray-600">
-                    Don't have an account?{" "}
-                    <Link to="/register" className="font-medium text-violet-600 hover:text-violet-700">Register</Link>
-                </p>
-
-            </form>
+                    <h2 className="mb-6 text-lg font-semibold text-slate-900">Log in</h2>
+                    <div className="space-y-4">
+                        <label className="block">
+                            <span className="mb-1.5 block text-sm font-medium text-slate-700">Email</span>
+                            <input
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="you@example.com"
+                                type="email"
+                                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 placeholder-slate-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+                            />
+                        </label>
+                        <label className="block">
+                            <span className="mb-1.5 block text-sm font-medium text-slate-700">Password</span>
+                            <input
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="••••••••"
+                                type="password"
+                                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 placeholder-slate-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+                            />
+                        </label>
+                    </div>
+                    {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
+                    <button
+                        type="submit"
+                        className="mt-6 w-full rounded-lg bg-violet-600 py-2.5 font-medium text-white shadow-sm transition-colors hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
+                    >
+                        Sign in
+                    </button>
+                    <p className="mt-6 text-center text-sm text-slate-600">
+                        Don&apos;t have an account?{" "}
+                        <Link to="/register" className="font-medium text-violet-600 hover:text-violet-700">
+                            Register
+                        </Link>
+                    </p>
+                </form>
+            </div>
         </div>
     );
 }

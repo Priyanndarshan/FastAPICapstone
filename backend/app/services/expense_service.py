@@ -7,7 +7,7 @@ How this connects to the rest of the code:
 """
 
 from datetime import date
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
@@ -23,8 +23,8 @@ from app.repositories.expense_repository import (
 )
 
 
-# Called by GET /expenses in expense_routes.list_expenses. Passes query params (start_date,
-# end_date, category_id, keyword) to expense_repository.list_expenses_for_user for filtering.
+# Called by GET /expenses in expense_routes.list_expenses. Passes query params to
+# expense_repository.list_expenses_for_user for filtering.
 def list_user_expenses(
     db: Session,
     user_id: int,
@@ -33,6 +33,8 @@ def list_user_expenses(
     end_date: Optional[date] = None,
     category_id: Optional[int] = None,
     keyword: Optional[str] = None,
+    transaction_type: Optional[str] = None,
+    payment_modes: Optional[List[str]] = None,
 ) -> list[Expense]:
     return list_expenses_for_user(
         db,
@@ -41,6 +43,8 @@ def list_user_expenses(
         end_date=end_date,
         category_id=category_id,
         keyword=keyword,
+        transaction_type=transaction_type,
+        payment_modes=payment_modes,
     )
 
 

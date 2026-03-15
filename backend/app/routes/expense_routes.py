@@ -9,7 +9,7 @@ Endpoints (all require auth):
 """
 
 from datetime import date
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
@@ -36,9 +36,14 @@ def list_expenses(
     end_date: Optional[date] = Query(default=None),
     category_id: Optional[int] = Query(default=None),
     keyword: Optional[str] = Query(default=None),
+    transaction_type: Optional[str] = Query(default=None, pattern="^(in|out)$"),
+    payment_modes: Optional[str] = Query(default=None, description="Comma-separated: UPI,CASH"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    modes = [m.strip() for m in payment_modes.split(",")] if payment_modes else None
+    if modes:
+        modes = [m for m in modes if m]
     return list_user_expenses(
         db,
         current_user.id,
@@ -46,6 +51,8 @@ def list_expenses(
         end_date=end_date,
         category_id=category_id,
         keyword=keyword,
+        transaction_type=transaction_type,
+        payment_modes=modes,
     )
 
 

@@ -6,15 +6,15 @@ How this connects to the rest of the code:
 """
 
 from datetime import date
-from typing import Optional
+from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
 from app.models.expense_model import Expense
 
 
-# Returns expenses for the user, optionally filtered by date range, category_id, and keyword (notes).
-# Ordered by date desc, then id desc.
+# Returns expenses for the user, optionally filtered by date range, category_id, keyword,
+# transaction_type, and payment_modes. Ordered by date desc, then id desc.
 def list_expenses_for_user(
     db: Session,
     user_id: int,
@@ -23,6 +23,8 @@ def list_expenses_for_user(
     end_date: Optional[date] = None,
     category_id: Optional[int] = None,
     keyword: Optional[str] = None,
+    transaction_type: Optional[str] = None,
+    payment_modes: Optional[List[str]] = None,
 ) -> list[Expense]:
     q = db.query(Expense).filter(Expense.user_id == user_id)
 
@@ -33,8 +35,11 @@ def list_expenses_for_user(
     if category_id is not None:
         q = q.filter(Expense.category_id == category_id)
     if keyword:
-        # Simple "contains" search on notes. (Can be improved later.)
         q = q.filter(Expense.notes.ilike(f"%{keyword}%"))
+    if transaction_type is not None:
+        q = q.filter(Expense.transaction_type == transaction_type)
+    if payment_modes:
+        q = q.filter(Expense.payment_mode.in_(payment_modes))
 
     return q.order_by(Expense.date.desc(), Expense.id.desc()).all()
 

@@ -17,7 +17,8 @@ from pydantic import BaseModel, ConfigDict, Field
 class ExpenseCreate(BaseModel):
     category_id: Optional[int] = None
     amount: Decimal = Field(gt=0)
-    currency: str = Field(min_length=3, max_length=10, default="INR")
+    payment_mode: str = Field(default="CASH", max_length=20)  # e.g. UPI, CASH
+    transaction_type: str = Field(default="out", pattern="^(in|out)$")
     date: date
     notes: Optional[str] = Field(default=None, max_length=500)
     is_recurring: bool = False
@@ -29,7 +30,8 @@ class ExpenseCreate(BaseModel):
 class ExpenseUpdate(BaseModel):
     category_id: Optional[int] = None
     amount: Optional[Decimal] = Field(default=None, gt=0)
-    currency: Optional[str] = Field(default=None, min_length=3, max_length=10)
+    payment_mode: Optional[str] = Field(default=None, max_length=20)
+    transaction_type: Optional[str] = Field(default=None, pattern="^(in|out)$")
     date: Optional[date] = None
     notes: Optional[str] = Field(default=None, max_length=500)
     is_recurring: Optional[bool] = None
@@ -45,7 +47,8 @@ class ExpenseResponse(BaseModel):
     id: int
     category_id: Optional[int] = None
     amount: Decimal
-    currency: str
+    payment_mode: str
+    transaction_type: str
     date: date
     notes: Optional[str] = None
     is_recurring: bool

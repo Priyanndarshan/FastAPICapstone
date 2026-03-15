@@ -14,8 +14,8 @@ export function useExpenses(initialFilters?: ExpenseFilters) {
         setError("");
         try {
             setExpenses(await expensesApi.getExpenses(filters));
-        } catch {
-            setError("Failed to load expenses.");
+        } catch (err) {
+            setError(parseApiError(err, "Failed to load expenses."));
         } finally {
             setLoading(false);
         }

@@ -27,7 +27,10 @@ class Expense(Base):
 
     # Monetary fields.
     amount = Column(Numeric(12, 2), nullable=False)
-    currency = Column(String, nullable=False, default="INR")
+    # Payment mode: UPI, CASH, etc.
+    payment_mode = Column(String, nullable=False, default="CASH")
+    # Transaction direction: "in" (Cash In) or "out" (Cash Out).
+    transaction_type = Column(String, nullable=False, default="out")
 
     # When the expense occurred.
     date = Column(Date, nullable=False, default=date.today)

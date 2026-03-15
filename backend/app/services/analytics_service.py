@@ -34,7 +34,8 @@ def get_monthly_analytics(db: Session, user_id: int, month: int, year: int):
         .filter(
             # Restrict to current user (matches auth-scoped pattern from routes).
             Expense.user_id == user_id,
-            # Restrict to the requested calendar month using SQL extract.
+            # Only "Cash Out" (expenses) count toward spending; "Cash In" (income) is excluded.
+            Expense.transaction_type == "out",
             extract("year", Expense.date) == year,
             extract("month", Expense.date) == month,
         )
@@ -92,6 +93,7 @@ def get_top_category(db: Session, user_id: int, month: int, year: int):
         )
         .filter(
             Expense.user_id == user_id,
+            Expense.transaction_type == "out",
             extract("year", Expense.date) == year,
             extract("month", Expense.date) == month,
         )
@@ -150,6 +152,7 @@ def get_trend(db: Session, user_id: int, months: int):
         )
         .filter(
             Expense.user_id == user_id,
+            Expense.transaction_type == "out",
             Expense.date >= start_date,
         )
         .group_by(extract("year", Expense.date), extract("month", Expense.date))
