@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import * as budgetsApi from "../api/budgets";
 import type { Budget } from "../types";
-import type { BudgetCreatePayload, BudgetUpdatePayload } from "../api/budgets";
+import type { BudgetCreatePayload, BudgetUpdatePayload } from "../types";
 import { parseApiError } from "../utils/parseApiError";
 
 export function useBudgets() {

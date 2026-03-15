@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
+import { ROUTES } from "../config/constants";
 
 export default function Register() {
     const { register } = useAuth();
@@ -19,7 +20,7 @@ export default function Register() {
         }
         try {
             await register(name, email, password);
-            navigate("/dashboard");
+            navigate(ROUTES.DASHBOARD);
         } catch (err: any) {
             const detail = err.response?.data?.detail;
             const msg = Array.isArray(detail)
@@ -84,7 +85,7 @@ export default function Register() {
                     </button>
                     <p className="mt-6 text-center text-sm text-slate-600">
                         Already have an account?{" "}
-                        <Link to="/login" className="font-medium text-violet-600 hover:text-violet-700">
+                        <Link to={ROUTES.LOGIN} className="font-medium text-violet-600 hover:text-violet-700">
                             Log in
                         </Link>
                     </p>

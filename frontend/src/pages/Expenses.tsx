@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from "react";
-import CashFlowSummaryCard from "../components/shared/CashFlowSummaryCard";
+import { CashFlowSummaryCard } from "../components/shared";
 import { useExpenses } from "../hooks/useExpenses";
 import { useCategories } from "../hooks/useCategories";
 import type { Expense } from "../types";
-import type { ExpensePayload, ExpenseFilters } from "../api/expenses";
+import type { ExpensePayload, ExpenseFilters } from "../types";
 
 const PAYMENT_MODES = ["UPI", "CASH"] as const;
 
@@ -290,98 +290,98 @@ export default function Expenses() {
                             </button>
                         </div>
                         <div className="min-h-0 flex-1 overflow-y-auto">
-                        <form onSubmit={handleAdd} className="p-5">
-                            <div className="grid gap-4 sm:grid-cols-2">
-                                <label className="block">
-                                    <span className="mb-1 block text-xs font-medium text-slate-500">Amount *</span>
+                            <form onSubmit={handleAdd} className="p-5">
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                    <label className="block">
+                                        <span className="mb-1 block text-xs font-medium text-slate-500">Amount *</span>
+                                        <input
+                                            type="text"
+                                            inputMode="decimal"
+                                            value={form.amount}
+                                            onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
+                                            placeholder="0.00"
+                                            className={inputClass}
+                                        />
+                                    </label>
+                                    <label className="block">
+                                        <span className="mb-1 block text-xs font-medium text-slate-500">Date *</span>
+                                        <input
+                                            type="date"
+                                            value={form.date}
+                                            onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
+                                            className={inputClass}
+                                        />
+                                    </label>
+                                    <label className="block">
+                                        <span className="mb-1 block text-xs font-medium text-slate-500">Category</span>
+                                        <select
+                                            value={form.category_id ?? ""}
+                                            onChange={(e) =>
+                                                setForm((f) => ({
+                                                    ...f,
+                                                    category_id: e.target.value ? Number(e.target.value) : null,
+                                                }))
+                                            }
+                                            className={inputClass}
+                                        >
+                                            <option value="">None</option>
+                                            {categories.map((c) => (
+                                                <option key={c.id} value={c.id}>
+                                                    {c.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </label>
+                                    <label className="block">
+                                        <span className="mb-1 block text-xs font-medium text-slate-500">Payment mode</span>
+                                        <select
+                                            value={form.payment_mode ?? "CASH"}
+                                            onChange={(e) => setForm((f) => ({ ...f, payment_mode: e.target.value }))}
+                                            className={inputClass}
+                                        >
+                                            {PAYMENT_MODES.map((mode) => (
+                                                <option key={mode} value={mode}>{mode}</option>
+                                            ))}
+                                        </select>
+                                    </label>
+                                </div>
+                                <label className="mt-4 block">
+                                    <span className="mb-1 block text-xs font-medium text-slate-500">Notes</span>
                                     <input
                                         type="text"
-                                        inputMode="decimal"
-                                        value={form.amount}
-                                        onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
-                                        placeholder="0.00"
+                                        value={form.notes ?? ""}
+                                        onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+                                        placeholder="Optional"
                                         className={inputClass}
                                     />
                                 </label>
-                                <label className="block">
-                                    <span className="mb-1 block text-xs font-medium text-slate-500">Date *</span>
+                                <label className="mt-3 flex items-center gap-2 text-sm text-slate-700">
                                     <input
-                                        type="date"
-                                        value={form.date}
-                                        onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
-                                        className={inputClass}
+                                        type="checkbox"
+                                        checked={form.is_recurring}
+                                        onChange={(e) => setForm((f) => ({ ...f, is_recurring: e.target.checked }))}
+                                        className="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
                                     />
+                                    Recurring
                                 </label>
-                                <label className="block">
-                                    <span className="mb-1 block text-xs font-medium text-slate-500">Category</span>
-                                    <select
-                                        value={form.category_id ?? ""}
-                                        onChange={(e) =>
-                                            setForm((f) => ({
-                                                ...f,
-                                                category_id: e.target.value ? Number(e.target.value) : null,
-                                            }))
-                                        }
-                                        className={inputClass}
+                                {addError && <p className="mt-3 text-sm text-red-600">{addError}</p>}
+                                <div className="mt-6 flex justify-end gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setShowAddForm(false);
+                                            setAddError("");
+                                            setForm(defaultPayload);
+                                        }}
+                                        className={btnSecondary}
                                     >
-                                        <option value="">None</option>
-                                        {categories.map((c) => (
-                                            <option key={c.id} value={c.id}>
-                                                {c.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </label>
-                                <label className="block">
-                                    <span className="mb-1 block text-xs font-medium text-slate-500">Payment mode</span>
-                                    <select
-                                        value={form.payment_mode ?? "CASH"}
-                                        onChange={(e) => setForm((f) => ({ ...f, payment_mode: e.target.value }))}
-                                        className={inputClass}
-                                    >
-                                        {PAYMENT_MODES.map((mode) => (
-                                            <option key={mode} value={mode}>{mode}</option>
-                                        ))}
-                                    </select>
-                                </label>
-                            </div>
-                            <label className="mt-4 block">
-                                <span className="mb-1 block text-xs font-medium text-slate-500">Notes</span>
-                                <input
-                                    type="text"
-                                    value={form.notes ?? ""}
-                                    onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-                                    placeholder="Optional"
-                                    className={inputClass}
-                                />
-                            </label>
-                            <label className="mt-3 flex items-center gap-2 text-sm text-slate-700">
-                                <input
-                                    type="checkbox"
-                                    checked={form.is_recurring}
-                                    onChange={(e) => setForm((f) => ({ ...f, is_recurring: e.target.checked }))}
-                                    className="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
-                                />
-                                Recurring
-                            </label>
-                            {addError && <p className="mt-3 text-sm text-red-600">{addError}</p>}
-                            <div className="mt-6 flex justify-end gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setShowAddForm(false);
-                                        setAddError("");
-                                        setForm(defaultPayload);
-                                    }}
-                                    className={btnSecondary}
-                                >
-                                    Cancel
-                                </button>
-                                <button type="submit" disabled={adding} className={btnPrimary}>
-                                    {adding ? "Adding…" : "Add"}
-                                </button>
-                            </div>
-                        </form>
+                                        Cancel
+                                    </button>
+                                    <button type="submit" disabled={adding} className={btnPrimary}>
+                                        {adding ? "Adding…" : "Add"}
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -443,11 +443,10 @@ export default function Expenses() {
                         <button
                             type="button"
                             onClick={() => setPaymentModesOpen((o) => !o)}
-                            className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20 ${
-                                paymentModeSelected.length > 0
+                            className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/20 ${paymentModeSelected.length > 0
                                     ? "border-violet-500 bg-violet-50 text-violet-700"
                                     : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
-                            }`}
+                                }`}
                             aria-label="Payment modes"
                             aria-expanded={paymentModesOpen}
                         >
@@ -534,7 +533,7 @@ export default function Expenses() {
                             /
                         </span>
                     </div>
-                    <div className="flex shrink-0 gap-2">
+                    <div className="ml-auto flex shrink-0 gap-2">
                         <button
                             type="button"
                             onClick={() => {

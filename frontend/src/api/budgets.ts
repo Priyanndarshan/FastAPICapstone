@@ -1,18 +1,5 @@
 import client from "./client";
-import type { Budget } from "../types";
-
-export interface BudgetCreatePayload {
-    category_id: number;
-    month: number;
-    year: number;
-    limit_amount: string;
-}
-
-export interface BudgetUpdatePayload {
-    month?: number;
-    year?: number;
-    limit_amount?: string;
-}
+import type { Budget, BudgetCreatePayload, BudgetUpdatePayload } from "../types";
 
 export async function getBudgets(): Promise<Budget[]> {
     const res = await client.get("/budgets");

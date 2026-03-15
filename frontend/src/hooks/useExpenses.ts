@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import * as expensesApi from "../api/expenses";
 import type { Expense } from "../types";
-import type { ExpenseFilters, ExpensePayload } from "../api/expenses";
+import type { ExpenseFilters, ExpensePayload } from "../types";
 import { parseApiError } from "../utils/parseApiError";
 
 export function useExpenses(initialFilters?: ExpenseFilters) {

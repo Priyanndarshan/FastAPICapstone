@@ -1,11 +1,9 @@
+import { formatAmount } from "../../utils/formatters";
+
 interface CashFlowSummaryCardProps {
     cashIn: number;
     cashOut: number;
     loading?: boolean;
-}
-
-function formatAmount(value: number): string {
-    return value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 export default function CashFlowSummaryCard({ cashIn, cashOut, loading }: CashFlowSummaryCardProps) {

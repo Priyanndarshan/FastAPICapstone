@@ -61,3 +61,43 @@ export interface TrendPoint {
     year: number;
     total_spent: string;
 }
+
+/** Response shape for GET /analytics/trend */
+export interface TrendResponse {
+    points: TrendPoint[];
+}
+
+// --- API request payloads and filters ---
+
+export interface ExpenseFilters {
+    start_date?: string;
+    end_date?: string;
+    category_id?: number;
+    keyword?: string;
+    transaction_type?: "in" | "out";
+    payment_modes?: string; // comma-separated e.g. "UPI,CASH"
+}
+
+export interface ExpensePayload {
+    category_id?: number | null;
+    amount: string;
+    payment_mode?: string;
+    transaction_type?: "in" | "out";
+    date: string;
+    notes?: string | null;
+    is_recurring: boolean;
+    recurrence_period?: string | null;
+}
+
+export interface BudgetCreatePayload {
+    category_id: number;
+    month: number;
+    year: number;
+    limit_amount: string;
+}
+
+export interface BudgetUpdatePayload {
+    month?: number;
+    year?: number;
+    limit_amount?: string;
+}

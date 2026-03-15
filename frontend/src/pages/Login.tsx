@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
+import { ROUTES } from "../config/constants";
 
 export default function Login() {
     const { login } = useAuth();
@@ -14,7 +15,7 @@ export default function Login() {
         setError("");
         try {
             await login(email, password);
-            navigate("/dashboard");
+            navigate(ROUTES.DASHBOARD);
         } catch (err: any) {
             setError(err.message);
         }
@@ -63,7 +64,7 @@ export default function Login() {
                     </button>
                     <p className="mt-6 text-center text-sm text-slate-600">
                         Don&apos;t have an account?{" "}
-                        <Link to="/register" className="font-medium text-violet-600 hover:text-violet-700">
+                        <Link to={ROUTES.REGISTER} className="font-medium text-violet-600 hover:text-violet-700">
                             Register
                         </Link>
                     </p>

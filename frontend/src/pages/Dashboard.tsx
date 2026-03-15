@@ -1,13 +1,11 @@
 import { useAuth } from "../contexts/AuthContext";
 import { Link } from "react-router-dom";
-import CashFlowSummaryCard from "../components/shared/CashFlowSummaryCard";
+import { CashFlowSummaryCard } from "../components/shared";
 import { useAnalytics } from "../hooks/useAnalytics";
 import { useExpenses } from "../hooks/useExpenses";
 import { useCategories } from "../hooks/useCategories";
-
-const MONTH_NAMES = Array.from({ length: 12 }, (_, i) =>
-    new Date(2000, i, 1).toLocaleString("default", { month: "short" })
-);
+import { MONTH_NAMES } from "../config/constants";
+import { formatAmount } from "../utils/formatters";
 
 export default function Dashboard() {
     const { user } = useAuth();
@@ -64,7 +62,7 @@ export default function Dashboard() {
                         ) : (
                             <p className="text-2xl font-bold tabular-nums text-slate-900">
                                 {monthly
-                                    ? Number(monthly.total_spent).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                                    ? formatAmount(Number(monthly.total_spent))
                                     : "0.00"}
                             </p>
                         )}
@@ -87,7 +85,7 @@ export default function Dashboard() {
                                     {topCategory.category_name ?? "Uncategorized"}
                                 </p>
                                 <p className="mt-1 tabular-nums text-slate-600">
-                                    {Number(topCategory.total_amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    {formatAmount(Number(topCategory.total_amount))}
                                 </p>
                             </>
                         ) : (
@@ -190,7 +188,7 @@ export default function Dashboard() {
                                             {MONTH_NAMES[p.month - 1]} {p.year}
                                         </span>
                                         <span className="tabular-nums font-medium text-slate-900">
-                                            {Number(p.total_spent).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            {formatAmount(Number(p.total_spent))}
                                         </span>
                                     </li>
                                 ))}
