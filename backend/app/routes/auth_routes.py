@@ -20,7 +20,7 @@ from sqlalchemy.orm import Session
 # Import Pydantic schemas that describe request/response shapes.
 # - `UserRegister`: expected JSON body for `/auth/register`
 # - `UserResponse`: response model for register endpoint
-from app.schemas.user_schema import UserRegister, UserLogin, UserResponse
+from app.schemas.user_schema import UserRegister, UserLogin, UserResponse, UserProfileUpdate
 
 # Import service functions that implement the authentication logic.
 # Routes should be thin; services do the heavy lifting.
@@ -29,6 +29,7 @@ from app.services.auth_service import (
     login_user,
     refresh_access_token,
     logout_user,
+    update_user_profile,
 )
 
 # Import DB dependency to get a per-request SQLAlchemy session.
@@ -66,12 +67,22 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(),db: Session = Depends
     # - `db`: injected DB session
     return login_user(db, form_data)
 
-@router.get("/me")
+@router.get("/me", response_model=UserResponse)
 def get_current_user_profile(
     current_user: User = Depends(get_current_user)
 ):
     # Return the authenticated user's profile (requires Authorization: Bearer <access_token>).
     return current_user
+
+
+@router.patch("/me", response_model=UserResponse)
+def patch_current_user_profile(
+    body: UserProfileUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    # Update the authenticated user's profile (name and/or phone).
+    return update_user_profile(db, current_user.id, body)
 
 @router.post("/refresh")
 def refresh_token(

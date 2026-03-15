@@ -1,5 +1,9 @@
 import client from "./client";
-import type { MonthlyAnalytics, TopCategory, TrendResponse } from "../types";
+import type { MonthlyAnalytics, TopCategory, TrendPoint } from "../types";
+
+export interface TrendResponse {
+    points: TrendPoint[];
+}
 
 export async function getMonthlyAnalytics(month: number, year: number): Promise<MonthlyAnalytics> {
     const res = await client.get("/analytics/monthly", { params: { month, year } });

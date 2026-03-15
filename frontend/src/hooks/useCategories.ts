@@ -24,10 +24,11 @@ export function useCategories() {
         }
     }
 
-    async function addCategory(name: string) {
+    async function addCategory(name: string): Promise<Category> {
         try {
             const cat = await categoriesApi.createCategory(name);
             setCategories((prev) => [...prev, cat]);
+            return cat;
         } catch (err) {
             throw new Error(parseApiError(err, "Failed to add category."));
         }

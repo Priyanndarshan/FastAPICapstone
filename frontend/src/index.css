@@ -1,4 +1,25 @@
 @import "tailwindcss";
+@import "react-day-picker/style.css";
+
+:root {
+  --theme-primary: #4863D4;
+  --theme-primary-dark: #3a50b8;
+  --theme-primary-light: #e8ecfc;
+}
+
+.rdp-root {
+  --rdp-accent-color: #4863D4;
+  --rdp-accent-background-color: #e8ecfc;
+  --rdp-today-color: #4863D4;
+  /* Compact size so calendar fits inside modals */
+  --rdp-day-height: 34px;
+  --rdp-day-width: 34px;
+  --rdp-day_button-height: 32px;
+  --rdp-day_button-width: 32px;
+  --rdp-nav_button-height: 1.75rem;
+  --rdp-nav_button-width: 1.75rem;
+  --rdp-nav-height: 2.25rem;
+}
 
 body {
   @apply bg-gray-50 text-gray-900 antialiased;

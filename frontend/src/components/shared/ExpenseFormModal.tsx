@@ -1,0 +1,148 @@
+import type { ExpensePayload } from "../../api/expenses";
+import type { Category } from "../../types";
+import { DatePicker } from "../ui/DatePicker";
+
+const PAYMENT_MODES = ["UPI", "CASH"] as const;
+
+const inputClass =
+    "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder-slate-400 focus:border-[#4863D4] focus:outline-none focus:ring-2 focus:ring-[#4863D4]/20 text-sm";
+const btnPrimary =
+    "rounded-lg bg-[#4863D4] px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#3a50b8] focus:outline-none focus:ring-2 focus:ring-[#4863D4] focus:ring-offset-2 disabled:opacity-50";
+const btnSecondary =
+    "rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#4863D4] focus:ring-offset-2";
+
+export interface ExpenseFormModalProps {
+    title: string;
+    form: ExpensePayload;
+    onChange: React.Dispatch<React.SetStateAction<ExpensePayload>>;
+    categories: Category[];
+    error: string;
+    submitting: boolean;
+    submitLabel: string;
+    onSubmit: (e: React.FormEvent) => void;
+    onClose: () => void;
+}
+
+export default function ExpenseFormModal({
+    title,
+    form,
+    onChange,
+    categories,
+    error,
+    submitting,
+    submitLabel,
+    onSubmit,
+    onClose,
+}: ExpenseFormModalProps) {
+    return (
+        <div
+            className="fixed inset-0 z-50 flex min-h-screen items-center justify-center bg-black/25 p-4"
+            onClick={onClose}
+        >
+            <div
+                className="flex max-h-[90vh] w-full max-w-xl flex-col rounded-xl border border-slate-200 bg-white shadow-xl"
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+                    <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                        aria-label="Close"
+                    >
+                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <div className="min-h-0 flex-1 overflow-y-auto">
+                    <form onSubmit={onSubmit} className="p-5">
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <label className="block">
+                                <span className="mb-1 block text-xs font-medium text-slate-500">Amount *</span>
+                                <input
+                                    type="text"
+                                    inputMode="decimal"
+                                    value={form.amount}
+                                    onChange={(e) => onChange((f) => ({ ...f, amount: e.target.value }))}
+                                    placeholder="0.00"
+                                    className={inputClass}
+                                />
+                            </label>
+                            <div className="block">
+                                <span className="mb-1 block text-xs font-medium text-slate-500">Date *</span>
+                                <DatePicker
+                                    value={form.date}
+                                    onChange={(value) => onChange((f) => ({ ...f, date: value }))}
+                                    placeholder="Pick a date"
+                                    className="w-full"
+                                />
+                            </div>
+                            <label className="block">
+                                <span className="mb-1 block text-xs font-medium text-slate-500">Category</span>
+                                <select
+                                    value={form.category_id ?? ""}
+                                    onChange={(e) =>
+                                        onChange((f) => ({
+                                            ...f,
+                                            category_id: e.target.value ? Number(e.target.value) : null,
+                                        }))
+                                    }
+                                    className={inputClass}
+                                >
+                                    <option value="">None</option>
+                                    {categories.map((c) => (
+                                        <option key={c.id} value={c.id}>
+                                            {c.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                            <label className="block">
+                                <span className="mb-1 block text-xs font-medium text-slate-500">Payment mode</span>
+                                <select
+                                    value={form.payment_mode ?? "CASH"}
+                                    onChange={(e) => onChange((f) => ({ ...f, payment_mode: e.target.value }))}
+                                    className={inputClass}
+                                >
+                                    {PAYMENT_MODES.map((mode) => (
+                                        <option key={mode} value={mode}>{mode}</option>
+                                    ))}
+                                </select>
+                            </label>
+                        </div>
+                        <label className="mt-4 block">
+                            <span className="mb-1 block text-xs font-medium text-slate-500">Notes</span>
+                            <input
+                                type="text"
+                                value={form.notes ?? ""}
+                                onChange={(e) => onChange((f) => ({ ...f, notes: e.target.value }))}
+                                placeholder="Optional"
+                                className={inputClass}
+                            />
+                        </label>
+                        <label className="mt-3 flex items-center gap-2 text-sm text-slate-700">
+                            <input
+                                type="checkbox"
+                                checked={form.is_recurring}
+                                onChange={(e) => onChange((f) => ({ ...f, is_recurring: e.target.checked }))}
+                                className="h-4 w-4 rounded border-slate-300 text-[#4863D4] focus:ring-[#4863D4]"
+                            />
+                            Recurring
+                        </label>
+                        {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+                        <div className="mt-6 flex justify-end gap-2">
+                            <button type="button" onClick={onClose} className={btnSecondary}>
+                                Cancel
+                            </button>
+                            <button type="submit" disabled={submitting} className={btnPrimary}>
+                                {submitLabel}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    );
+}

@@ -7,6 +7,7 @@ export const ROUTES = {
   LOGIN: "/login",
   REGISTER: "/register",
   DASHBOARD: "/dashboard",
+  PROFILE: "/profile",
   EXPENSES: "/expenses",
   CATEGORIES: "/categories",
 } as const;

@@ -1,7 +1,7 @@
 // React hooks for context, side effects, and state
 import { createContext, useContext, useEffect, useState } from "react";
 // Auth API: get current user, login, logout, register (aliased to avoid name clash with our login/register functions)
-import { getMe, login as loginFn, logout as logoutFn, register as registerFn } from "../api/auth";
+import { getMe, login as loginFn, logout as logoutFn, register as registerFn, updateProfile as updateProfileFn } from "../api/auth";
 
 import type { User } from "../types";
 // Everything the rest of the app can read/do from auth context
@@ -9,8 +9,9 @@ interface AuthContextType {
     user: User | null;           // current user or null if not logged in
     loading: boolean;            // true while we're checking for an existing session on first load
     login: (email: string, password: string) => Promise<void>;
-    register: (name: string, email: string, password: string) => Promise<void>;
+    register: (name: string, email: string, password: string, phone?: string | null) => Promise<void>;
     logout: () => Promise<void>;
+    updateProfile: (data: { name?: string; phone?: string | null }) => Promise<void>;
 }
 
 // Create the context; default is null so we can detect when used outside AuthProvider
@@ -51,8 +52,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Call from Register page: create account then log in automatically
-    async function register(name: string, email: string, password: string) {
-        await registerFn(name, email, password);   // create user on backend
+    async function register(name: string, email: string, password: string, phone?: string | null) {
+        await registerFn(name, email, password, phone);   // create user on backend
         await login(email, password);              // log in and set user in context
     }
 
@@ -62,9 +63,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null);     // clear user so UI shows as logged out
     }
 
+    // Update profile (name/phone) and refresh user in context
+    async function updateProfile(data: { name?: string; phone?: string | null }) {
+        const updated = await updateProfileFn(data);
+        setUser(updated);
+    }
+
     // Provide auth state and functions to any component that uses useAuth()
     return (
-        <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+        <AuthContext.Provider value={{ user, loading, login, register, logout, updateProfile }}>
             {children}
         </AuthContext.Provider>
     );

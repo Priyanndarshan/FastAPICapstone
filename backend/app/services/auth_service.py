@@ -29,12 +29,13 @@ from jose import jwt, JWTError
 # Import request schema types (Pydantic models) for type hints and clarity.
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app.schemas.user_schema import UserRegister
+from app.schemas.user_schema import UserRegister, UserProfileUpdate
 
 # Import repository functions that directly talk to the `users` table.
 from app.repositories.user_repository import (
     get_user_by_email,
     create_user,
+    update_user,
 )
 
 # Import repository functions for storing/reading/deleting refresh tokens.
@@ -82,11 +83,25 @@ def register_user(db: Session, user_data: UserRegister):
         db,
         name=user_data.name,
         email=user_data.email,
-        password=hashed_password
+        password=hashed_password,
+        phone=user_data.phone,
     )
 
     # Return the ORM user object (FastAPI converts it to the `UserResponse` schema).
     return new_user
+
+
+def update_user_profile(db: Session, user_id: int, data: UserProfileUpdate):
+    """Update the current user's name and/or phone; returns updated user."""
+    updated = update_user(
+        db,
+        user_id,
+        name=data.name,
+        phone=data.phone,
+    )
+    if not updated:
+        raise HTTPException(status_code=404, detail="User not found")
+    return updated
 
 
 def login_user(db: Session, form_data: OAuth2PasswordRequestForm) -> dict:

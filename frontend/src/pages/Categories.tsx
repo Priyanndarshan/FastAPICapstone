@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useCategories } from "../hooks/useCategories";
 import { useBudgets } from "../hooks/useBudgets";
 import { useAnalytics } from "../hooks/useAnalytics";
@@ -37,11 +37,14 @@ export default function Categories() {
         return map;
     }, [budgets, monthly]);
 
-    // Add form state
-    const [addName, setAddName] = useState("");
-    const [adding, setAdding] = useState(false);
-    const [addError, setAddError] = useState("");
-    const addInputRef = useRef<HTMLInputElement>(null);
+    // Add category modal (with optional budget)
+    const [addModalOpen, setAddModalOpen] = useState(false);
+    const [addModalName, setAddModalName] = useState("");
+    const [addModalAmount, setAddModalAmount] = useState("");
+    const [addModalMonth, setAddModalMonth] = useState(currentMonth);
+    const [addModalYear, setAddModalYear] = useState(currentYear);
+    const [addModalError, setAddModalError] = useState("");
+    const [addModalSaving, setAddModalSaving] = useState(false);
 
     // Delete state
     const [deleteId, setDeleteId] = useState<number | null>(null);
@@ -56,19 +59,52 @@ export default function Categories() {
     const [budgetFormError, setBudgetFormError] = useState("");
     const [budgetFormSaving, setBudgetFormSaving] = useState(false);
 
-    async function handleAdd(e: React.FormEvent) {
+    function openAddModal() {
+        setAddModalName("");
+        setAddModalAmount("");
+        setAddModalMonth(currentMonth);
+        setAddModalYear(currentYear);
+        setAddModalError("");
+        setAddModalOpen(true);
+    }
+
+    function closeAddModal() {
+        setAddModalOpen(false);
+        setAddModalName("");
+        setAddModalAmount("");
+        setAddModalError("");
+    }
+
+    async function handleAddCategoryWithBudget(e: React.FormEvent) {
         e.preventDefault();
-        if (!addName.trim()) return;
-        setAdding(true);
-        setAddError("");
+        const name = addModalName.trim();
+        if (!name) {
+            setAddModalError("Category name is required.");
+            return;
+        }
+        const amountStr = addModalAmount.trim();
+        const amountNum = amountStr ? parseFloat(amountStr) : 0;
+        if (amountStr && (isNaN(amountNum) || amountNum <= 0)) {
+            setAddModalError("Enter a valid budget amount.");
+            return;
+        }
+        setAddModalSaving(true);
+        setAddModalError("");
         try {
-            await addCategory(addName.trim());
-            setAddName("");
-            addInputRef.current?.focus();
+            const cat = await addCategory(name);
+            if (amountStr && !isNaN(amountNum) && amountNum > 0) {
+                await addBudget({
+                    category_id: cat.id,
+                    month: addModalMonth,
+                    year: addModalYear,
+                    limit_amount: amountStr,
+                });
+            }
+            closeAddModal();
         } catch (err) {
-            setAddError((err as Error).message);
+            setAddModalError((err as Error).message);
         } finally {
-            setAdding(false);
+            setAddModalSaving(false);
         }
     }
 
@@ -150,71 +186,54 @@ export default function Categories() {
     }
 
     const btnSecondary =
-        "rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2";
+        "rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#4863D4] focus:ring-offset-2";
 
     return (
         <div className="space-y-8">
-            <header className="flex flex-wrap items-baseline justify-between gap-2">
+            <header className="flex flex-wrap items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight text-slate-900">Categories</h1>
                     <p className="mt-0.5 text-sm text-slate-500">Organize expenses and set budgets by category</p>
                 </div>
-                {!loading && !error && categories.length > 0 && (
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600">
-                        {categories.length} {categories.length === 1 ? "category" : "categories"}
-                    </span>
-                )}
-            </header>
-
-            {/* Add category — compact inline */}
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                <form onSubmit={handleAdd} className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                    <label className="flex-1">
-                        <span className="sr-only">Category name</span>
-                        <input
-                            ref={addInputRef}
-                            type="text"
-                            value={addName}
-                            onChange={(e) => setAddName(e.target.value)}
-                            placeholder="e.g. Groceries, Transport, Fitness"
-                            maxLength={100}
-                            className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-slate-900 placeholder-slate-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
-                        />
-                    </label>
+                <div className="flex items-center gap-3">
+                    {!loading && !error && categories.length > 0 && (
+                        <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-medium text-slate-600">
+                            {categories.length} {categories.length === 1 ? "category" : "categories"}
+                        </span>
+                    )}
                     <button
-                        type="submit"
-                        disabled={adding || !addName.trim()}
-                        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-violet-700 disabled:opacity-50"
+                        type="button"
+                        onClick={openAddModal}
+                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#4863D4] px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#3a50b8] focus:outline-none focus:ring-2 focus:ring-[#4863D4] focus:ring-offset-2"
                     >
                         <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
-                        {adding ? "Adding…" : "Add category"}
+                        Add category
                     </button>
-                </form>
-                {addError && <p className="mt-2 text-sm text-red-600">{addError}</p>}
-            </div>
+                </div>
+            </header>
 
-            {/* List states */}
+            {/* Category / budget cards — no outer card */}
             {loading && (
-                <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-slate-500 shadow-sm">
+                <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-slate-500 shadow-sm">
                     Loading…
                 </div>
             )}
 
             {!loading && error && (
-                <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center">
+                <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
                     <p className="text-red-700">{error}</p>
-                    <button type="button" onClick={refetch} className="mt-3 text-sm font-medium text-violet-600 hover:underline">
+                    <button type="button" onClick={refetch} className="mt-3 text-sm font-medium text-[#4863D4] hover:underline">
                         Try again
                     </button>
                 </div>
             )}
 
             {!loading && !error && categories.length === 0 && (
-                <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 py-16 text-center">
+                <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 py-12 px-6 text-center">
                     <p className="text-slate-600">No categories yet</p>
-                    <p className="mt-1 text-sm text-slate-500">Add one above to get started, then set a budget per category.</p>
+                    <p className="mt-1 text-sm text-slate-500">Click &quot;Add category&quot; above to create one and optionally set a budget.</p>
                 </div>
             )}
 
@@ -264,7 +283,7 @@ export default function Categories() {
                                     onChange={(e) => setBudgetFormName(e.target.value)}
                                     placeholder="e.g. Fitness, Groceries"
                                     maxLength={100}
-                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-[#4863D4] focus:outline-none focus:ring-2 focus:ring-[#4863D4]/20"
                                 />
                             </label>
                             <div className="grid grid-cols-2 gap-3">
@@ -273,7 +292,7 @@ export default function Categories() {
                                     <select
                                         value={budgetFormMonth}
                                         onChange={(e) => setBudgetFormMonth(Number(e.target.value))}
-                                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+                                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-[#4863D4] focus:outline-none focus:ring-2 focus:ring-[#4863D4]/20"
                                     >
                                         {MONTH_NAMES.map((name, i) => (
                                             <option key={name} value={i + 1}>{name}</option>
@@ -285,7 +304,7 @@ export default function Categories() {
                                     <select
                                         value={budgetFormYear}
                                         onChange={(e) => setBudgetFormYear(Number(e.target.value))}
-                                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+                                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-[#4863D4] focus:outline-none focus:ring-2 focus:ring-[#4863D4]/20"
                                     >
                                         {[currentYear - 1, currentYear, currentYear + 1].map((y) => (
                                             <option key={y} value={y}>{y}</option>
@@ -301,7 +320,7 @@ export default function Categories() {
                                     value={budgetFormAmount}
                                     onChange={(e) => setBudgetFormAmount(e.target.value)}
                                     placeholder="0.00"
-                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
+                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-[#4863D4] focus:outline-none focus:ring-2 focus:ring-[#4863D4]/20"
                                 />
                             </label>
                             {budgetFormError && (
@@ -318,9 +337,95 @@ export default function Categories() {
                                 <button
                                     type="submit"
                                     disabled={budgetFormSaving || !budgetFormName.trim() || !budgetFormAmount.trim()}
-                                    className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50"
+                                    className="rounded-lg bg-[#4863D4] px-4 py-2 text-sm font-medium text-white hover:bg-[#3a50b8] disabled:opacity-50"
                                 >
                                     {budgetFormSaving ? "Saving…" : "Save"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Add category (with optional budget) modal */}
+            {addModalOpen && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 p-4"
+                    onClick={closeAddModal}
+                >
+                    <div
+                        className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-6 shadow-xl"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <h3 className="text-lg font-semibold text-slate-900">Add category</h3>
+                        <p className="mt-0.5 text-sm text-slate-500">Create a category and optionally set a budget.</p>
+                        <form onSubmit={handleAddCategoryWithBudget} className="mt-4 space-y-4">
+                            <label className="block">
+                                <span className="mb-1 block text-xs font-medium text-slate-500">Category name</span>
+                                <input
+                                    type="text"
+                                    value={addModalName}
+                                    onChange={(e) => setAddModalName(e.target.value)}
+                                    placeholder="e.g. Groceries, Transport, Fitness"
+                                    maxLength={100}
+                                    autoFocus
+                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-[#4863D4] focus:outline-none focus:ring-2 focus:ring-[#4863D4]/20"
+                                />
+                            </label>
+                            <label className="block">
+                                <span className="mb-1 block text-xs font-medium text-slate-500">Budget amount (optional)</span>
+                                <input
+                                    type="text"
+                                    inputMode="decimal"
+                                    value={addModalAmount}
+                                    onChange={(e) => setAddModalAmount(e.target.value)}
+                                    placeholder="0.00"
+                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-[#4863D4] focus:outline-none focus:ring-2 focus:ring-[#4863D4]/20"
+                                />
+                            </label>
+                            <div className="grid grid-cols-2 gap-3">
+                                <label className="block">
+                                    <span className="mb-1 block text-xs font-medium text-slate-500">Month</span>
+                                    <select
+                                        value={addModalMonth}
+                                        onChange={(e) => setAddModalMonth(Number(e.target.value))}
+                                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-[#4863D4] focus:outline-none focus:ring-2 focus:ring-[#4863D4]/20"
+                                    >
+                                        {MONTH_NAMES.map((name, i) => (
+                                            <option key={name} value={i + 1}>{name}</option>
+                                        ))}
+                                    </select>
+                                </label>
+                                <label className="block">
+                                    <span className="mb-1 block text-xs font-medium text-slate-500">Year</span>
+                                    <select
+                                        value={addModalYear}
+                                        onChange={(e) => setAddModalYear(Number(e.target.value))}
+                                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-[#4863D4] focus:outline-none focus:ring-2 focus:ring-[#4863D4]/20"
+                                    >
+                                        {[currentYear - 1, currentYear, currentYear + 1].map((y) => (
+                                            <option key={y} value={y}>{y}</option>
+                                        ))}
+                                    </select>
+                                </label>
+                            </div>
+                            {addModalError && (
+                                <p className="text-sm text-red-600">{addModalError}</p>
+                            )}
+                            <div className="flex gap-2 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={closeAddModal}
+                                    className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={addModalSaving || !addModalName.trim()}
+                                    className="rounded-lg bg-[#4863D4] px-4 py-2 text-sm font-medium text-white hover:bg-[#3a50b8] disabled:opacity-50"
+                                >
+                                    {addModalSaving ? "Adding…" : "Add category"}
                                 </button>
                             </div>
                         </form>
@@ -394,7 +499,7 @@ function CategoryRow({
         <article className="flex flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
             <div className="flex items-start justify-between gap-2">
                 <div className="flex min-w-0 items-center gap-2">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-600">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e8ecfc] text-[#4863D4]">
                         <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                         </svg>
@@ -429,14 +534,14 @@ function CategoryRow({
                             <span className="tabular-nums text-slate-700">{formatAmount(budgetInfo!.limit)}</span>
                         </span>
                         {left >= 0 ? (
-                            <span className="font-medium tabular-nums text-emerald-600">{formatAmount(left)} left</span>
+                            <span className="font-medium tabular-nums text-[#4863D4]">{formatAmount(left)} left</span>
                         ) : (
                             <span className="font-medium tabular-nums text-red-600">{formatAmount(-left)} over</span>
                         )}
                     </div>
                     <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
                         <div
-                            className={`h-full rounded-full transition-all ${overBudget ? "bg-red-500" : "bg-violet-500"}`}
+                            className={`h-full rounded-full transition-all ${overBudget ? "bg-red-500" : "bg-[#4863D4]"}`}
                             style={{ width: `${Math.min(100, pct)}%` }}
                         />
                     </div>
@@ -453,7 +558,7 @@ function CategoryRow({
                 <button
                     type="button"
                     onClick={onAddBudgetClick}
-                    className="w-full rounded-lg bg-emerald-600 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+                    className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 hover:border-[#4863D4] hover:text-[#4863D4] focus:outline-none focus:ring-2 focus:ring-[#4863D4] focus:ring-offset-2"
                 >
                     {hasBudget ? "Edit budget" : "Add budget"}
                 </button>

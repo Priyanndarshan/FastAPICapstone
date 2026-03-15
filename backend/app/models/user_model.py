@@ -10,6 +10,7 @@ class User(Base):
     name = Column(String, nullable=False)
     email = Column(String, unique=True, index=True)
     password = Column(String, nullable=False)
+    phone = Column(String, nullable=True)
 
     # One-to-many relationship: a user can have many categories.
     categories = relationship("Category", back_populates="user", cascade="all, delete-orphan")

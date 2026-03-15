@@ -1,8 +1,8 @@
 import api from "./client";
 
-export async function register(name: string, email: string, password: string) {
-    const res = await api.post("/auth/register", { name, email, password });
-    return res.data; // returns { id, name, email }
+export async function register(name: string, email: string, password: string, phone?: string | null) {
+    const res = await api.post("/auth/register", { name, email, password, phone: phone ?? undefined });
+    return res.data; // returns { id, name, email, phone }
 }
 
 export async function login(email: string, password: string) {
@@ -21,6 +21,11 @@ export async function login(email: string, password: string) {
 export async function getMe() {
     const res = await api.get("/auth/me"); // token auto-attached by interceptor
     return res.data;
+}
+
+export async function updateProfile(data: { name?: string; phone?: string | null }) {
+    const res = await api.patch("/auth/me", data);
+    return res.data; // returns updated user { id, name, email, phone }
 }
 
 export async function logout() {

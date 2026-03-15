@@ -1,99 +1,118 @@
+import { useState, useMemo } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { Link } from "react-router-dom";
-import { CashFlowSummaryCard } from "../components/shared";
+import { ROUTES } from "../config/constants";
+import { SpendingTrendChart, CategorySpendingPieChart } from "../components/shared";
 import { useAnalytics } from "../hooks/useAnalytics";
 import { useExpenses } from "../hooks/useExpenses";
 import { useCategories } from "../hooks/useCategories";
+import { useBudgets } from "../hooks/useBudgets";
 import { MONTH_NAMES } from "../config/constants";
 import { formatAmount } from "../utils/formatters";
 
 export default function Dashboard() {
     const { user } = useAuth();
+    const [budgetWarningDismissed, setBudgetWarningDismissed] = useState(false);
     const now = new Date();
     const currentMonth = now.getMonth() + 1;
     const currentYear = now.getFullYear();
 
-    const { monthly, topCategory, trend, loading: analyticsLoading, error: analyticsError, refetch: refetchAnalytics } = useAnalytics(currentMonth, currentYear, 6);
+    const { monthly, trend, loading: analyticsLoading, error: analyticsError, refetch: refetchAnalytics } = useAnalytics(currentMonth, currentYear, 6);
     const { expenses, loading: expensesLoading } = useExpenses();
     const { categories } = useCategories();
+    const { budgets } = useBudgets();
 
     const recentExpenses = expenses.slice(0, 5);
+    const recurringExpenses = expenses.filter((e) => e.is_recurring);
     const getCategoryName = (id: number | null) =>
         id ? categories.find((c) => c.id === id)?.name ?? "—" : "—";
 
-    const periodLabel = `${MONTH_NAMES[currentMonth - 1]} ${currentYear}`;
+    const budgetByCategory = useMemo(() => {
+        const map: Record<number, { limit: number; spent: number }> = {};
+        const thisMonthBudgets = budgets.filter(
+            (b) => b.month === currentMonth && b.year === currentYear
+        );
+        for (const b of thisMonthBudgets) {
+            map[b.category_id] = { limit: Number(b.limit_amount), spent: 0 };
+        }
+        for (const c of monthly?.categories ?? []) {
+            if (c.category_id != null) {
+                const spent = Number(c.total_amount);
+                if (map[c.category_id]) {
+                    map[c.category_id].spent = spent;
+                } else {
+                    map[c.category_id] = { limit: 0, spent };
+                }
+            }
+        }
+        return map;
+    }, [budgets, monthly, currentMonth, currentYear]);
 
-    const thisMonthExpenses = expenses.filter((e) => {
+    const overBudgetCategories = useMemo(() => {
+        const list: { categoryId: number; name: string; limit: number; spent: number; overAmount: number }[] = [];
+        for (const [categoryId, data] of Object.entries(budgetByCategory)) {
+            if (data.limit > 0 && data.spent > data.limit) {
+                const catId = Number(categoryId);
+                const name = categories.find((c) => c.id === catId)?.name ?? "—";
+                list.push({
+                    categoryId: catId,
+                    name,
+                    limit: data.limit,
+                    spent: data.spent,
+                    overAmount: data.spent - data.limit,
+                });
+            }
+        }
+        return list;
+    }, [budgetByCategory, categories]);
+
+    const periodLabel = `${MONTH_NAMES[currentMonth - 1]} ${currentYear}`;
+    const thisMonthCount = expenses.filter((e) => {
         const [y, m] = e.date.split("-").map(Number);
         return y === currentYear && m === currentMonth;
-    });
-    const cashIn = thisMonthExpenses.filter((e) => e.transaction_type === "in").reduce((s, e) => s + Number(e.amount), 0);
-    const cashOut = thisMonthExpenses.filter((e) => e.transaction_type === "out").reduce((s, e) => s + Number(e.amount), 0);
+    }).length;
 
     return (
         <div className="space-y-8">
-            {/* Page header */}
+            {/* Header + period + quick stats */}
             <header>
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900">Dashboard</h1>
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                    {user ? `Welcome, ${user.name?.trim() || user.email || "User"}` : "Dashboard"}
+                </h1>
                 <p className="mt-1 text-sm text-slate-500">
-                    Overview for {periodLabel}
-                    {user?.name && <span className="ml-2 text-slate-400">· {user.name}</span>}
+                    {periodLabel}
                 </p>
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+                        {thisMonthCount} transaction{thisMonthCount !== 1 ? "s" : ""} this month
+                    </span>
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+                        {categories.length} categor{categories.length === 1 ? "y" : "ies"}
+                    </span>
+                </div>
             </header>
 
-            {/* Cash In / Cash Out / Net Balance summary */}
-            <CashFlowSummaryCard
-                cashIn={cashIn}
-                cashOut={cashOut}
-                loading={expensesLoading}
-            />
-
-            {/* KPI cards — two metrics only */}
-            <section className="grid gap-4 sm:grid-cols-2">
-                <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                    <div className="border-b border-slate-100 bg-slate-50/50 px-5 py-3">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                            Total spent this month
-                        </p>
-                    </div>
-                    <div className="px-5 py-5">
-                        {analyticsLoading ? (
-                            <div className="h-9 w-24 animate-pulse rounded bg-slate-200" />
-                        ) : (
-                            <p className="text-2xl font-bold tabular-nums text-slate-900">
-                                {monthly
-                                    ? formatAmount(Number(monthly.total_spent))
-                                    : "0.00"}
-                            </p>
-                        )}
-                        <p className="mt-1 text-xs text-slate-400">{periodLabel}</p>
-                    </div>
+            {/* Dismissible warning when budget exceeded */}
+            {overBudgetCategories.length > 0 && !budgetWarningDismissed && (
+                <div className="flex items-center gap-4 rounded-xl border border-red-200 bg-red-50 px-5 py-3">
+                    <p className="flex-1 min-w-0 text-sm font-medium text-red-800">
+                        Budget exceeded: {overBudgetCategories.map((c) => c.name).join(", ")}.
+                        <Link to={ROUTES.CATEGORIES} className="ml-1 font-medium text-red-700 hover:text-red-900 underline">
+                            Adjust →
+                        </Link>
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => setBudgetWarningDismissed(true)}
+                        className="shrink-0 rounded p-1.5 text-red-600 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-400"
+                        aria-label="Dismiss warning"
+                    >
+                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
                 </div>
-
-                <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                    <div className="border-b border-slate-100 bg-slate-50/50 px-5 py-3">
-                        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                            Top spending category
-                        </p>
-                    </div>
-                    <div className="px-5 py-5">
-                        {analyticsLoading ? (
-                            <div className="h-9 w-32 animate-pulse rounded bg-slate-200" />
-                        ) : topCategory ? (
-                            <>
-                                <p className="text-lg font-semibold text-slate-900">
-                                    {topCategory.category_name ?? "Uncategorized"}
-                                </p>
-                                <p className="mt-1 tabular-nums text-slate-600">
-                                    {formatAmount(Number(topCategory.total_amount))}
-                                </p>
-                            </>
-                        ) : (
-                            <p className="text-slate-500">No expenses this month yet</p>
-                        )}
-                    </div>
-                </div>
-            </section>
+            )}
 
             {analyticsError && (
                 <div className="rounded-xl border border-red-200 bg-red-50 px-5 py-4">
@@ -108,15 +127,15 @@ export default function Dashboard() {
                 </div>
             )}
 
-            {/* Main content: recent activity + trend */}
-            <div className="grid gap-8 lg:grid-cols-2">
+            {/* Row 1: Recent expenses | Spending by category */}
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
                 <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                     <div className="border-b border-slate-200 px-5 py-4">
                         <div className="flex items-center justify-between">
                             <h2 className="text-base font-semibold text-slate-900">Recent expenses</h2>
                             <Link
-                                to="/expenses"
-                                className="text-sm font-medium text-violet-600 hover:text-violet-700"
+                                to={ROUTES.EXPENSES}
+                                className="text-sm font-medium text-[#4863D4] hover:text-[#3a50b8]"
                             >
                                 View all →
                             </Link>
@@ -135,7 +154,7 @@ export default function Dashboard() {
                             </div>
                         ) : recentExpenses.length === 0 ? (
                             <p className="py-6 text-center text-sm text-slate-500">
-                                No expenses yet. Add one from the Expenses page.
+                                No expenses yet. <Link to={ROUTES.EXPENSES} className="font-medium text-[#4863D4] hover:underline">Add one</Link>.
                             </p>
                         ) : (
                             <ul className="divide-y divide-slate-100">
@@ -151,8 +170,8 @@ export default function Dashboard() {
                                                 </p>
                                             )}
                                         </div>
-                                        <span className={`ml-4 shrink-0 tabular-nums text-sm font-medium ${exp.transaction_type === "in" ? "text-emerald-600" : "text-red-600"}`}>
-                                            {exp.transaction_type === "in" ? "+" : ""}{exp.amount} <span className="text-slate-400">({exp.payment_mode})</span>
+                                        <span className={`ml-4 shrink-0 tabular-nums text-sm font-medium ${exp.transaction_type === "in" ? "text-[#4863D4]" : "text-red-600"}`}>
+                                            {exp.transaction_type === "in" ? "+" : ""}{formatAmount(Number(exp.amount))} <span className="text-slate-400">({exp.payment_mode})</span>
                                         </span>
                                     </li>
                                 ))}
@@ -161,41 +180,70 @@ export default function Dashboard() {
                     </div>
                 </section>
 
+                <CategorySpendingPieChart monthly={monthly} loading={analyticsLoading} />
+            </div>
+
+            {/* Row 2: Recurring expenses | Spending trend chart */}
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
                 <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                     <div className="border-b border-slate-200 px-5 py-4">
-                        <h2 className="text-base font-semibold text-slate-900">Spending trend</h2>
-                        <p className="mt-0.5 text-xs text-slate-500">Last 6 months</p>
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-base font-semibold text-slate-900">Recurring expenses</h2>
+                            <Link
+                                to={ROUTES.EXPENSES}
+                                className="text-sm font-medium text-[#4863D4] hover:text-[#3a50b8]"
+                            >
+                                Manage →
+                            </Link>
+                        </div>
+                        <p className="mt-0.5 text-xs text-slate-500">Scheduled / repeating transactions</p>
                     </div>
-                    <div className="px-5 py-4">
-                        {analyticsLoading ? (
-                            <div className="space-y-3">
-                                {[1, 2, 3, 4].map((i) => (
-                                    <div key={i} className="flex justify-between">
-                                        <div className="h-4 w-24 animate-pulse rounded bg-slate-100" />
-                                        <div className="h-4 w-14 animate-pulse rounded bg-slate-100" />
-                                    </div>
-                                ))}
+                    <div className="overflow-x-auto">
+                        {expensesLoading ? (
+                            <div className="p-5">
+                                <div className="h-24 animate-pulse rounded bg-slate-100" />
                             </div>
-                        ) : trend.length === 0 ? (
-                            <p className="py-6 text-center text-sm text-slate-500">
-                                No spending data yet.
+                        ) : recurringExpenses.length === 0 ? (
+                            <p className="px-5 py-8 text-center text-sm text-slate-500">
+                                No recurring expenses. Mark an expense as recurring on the <Link to={ROUTES.EXPENSES} className="font-medium text-[#4863D4] hover:underline">Expenses</Link> page.
                             </p>
                         ) : (
-                            <ul className="divide-y divide-slate-100">
-                                {trend.map((p) => (
-                                    <li key={`${p.year}-${p.month}`} className="flex items-center justify-between py-3 first:pt-0">
-                                        <span className="text-sm text-slate-600">
-                                            {MONTH_NAMES[p.month - 1]} {p.year}
-                                        </span>
-                                        <span className="tabular-nums font-medium text-slate-900">
-                                            {formatAmount(Number(p.total_spent))}
-                                        </span>
-                                    </li>
-                                ))}
-                            </ul>
+                            <table className="w-full min-w-[400px] text-left text-sm">
+                                <thead>
+                                    <tr className="border-b border-slate-200 bg-slate-50/80">
+                                        <th className="px-5 py-3 font-medium text-slate-600">Category</th>
+                                        <th className="px-5 py-3 font-medium text-slate-600">Amount</th>
+                                        <th className="px-5 py-3 font-medium text-slate-600">Period</th>
+                                        <th className="px-5 py-3 font-medium text-slate-600">Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {recurringExpenses.map((exp) => (
+                                        <tr key={exp.id} className="hover:bg-slate-50/50">
+                                            <td className="px-5 py-3 font-medium text-slate-800">
+                                                {getCategoryName(exp.category_id)}
+                                            </td>
+                                            <td className="px-5 py-3 tabular-nums">
+                                                <span className={exp.transaction_type === "in" ? "text-[#4863D4]" : "text-slate-900"}>
+                                                    {exp.transaction_type === "in" ? "+" : ""}{formatAmount(Number(exp.amount))}
+                                                </span>
+                                                <span className="ml-1 text-xs text-slate-400">({exp.payment_mode})</span>
+                                            </td>
+                                            <td className="px-5 py-3 capitalize text-slate-600">
+                                                {exp.recurrence_period ?? "—"}
+                                            </td>
+                                            <td className="max-w-[180px] truncate px-5 py-3 text-slate-500" title={exp.notes ?? undefined}>
+                                                {exp.notes ?? "—"}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         )}
                     </div>
                 </section>
+
+                <SpendingTrendChart trend={trend} loading={analyticsLoading} />
             </div>
         </div>
     );

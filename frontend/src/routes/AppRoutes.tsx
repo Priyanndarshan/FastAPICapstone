@@ -2,9 +2,11 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { Layout } from "../components/shared";
 import { ROUTES } from "../config/constants";
+import Landing from "../pages/Landing";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 import Dashboard from "../pages/Dashboard";
+import Profile from "../pages/Profile";
 import Categories from "../pages/Categories";
 import Expenses from "../pages/Expenses";
 
@@ -30,8 +32,9 @@ export default function AppRoutes() {
       <Route path={ROUTES.LOGIN} element={<PublicRoute><Login /></PublicRoute>} />
       <Route path={ROUTES.REGISTER} element={<PublicRoute><Register /></PublicRoute>} />
       <Route path={ROUTES.DASHBOARD} element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-      <Route path={ROUTES.HOME} element={<Navigate to={ROUTES.DASHBOARD} replace />} />
-      <Route path="*" element={<Navigate to={ROUTES.LOGIN} replace />} />
+      <Route path={ROUTES.PROFILE} element={<PrivateRoute><Profile /></PrivateRoute>} />
+      <Route path={ROUTES.HOME} element={<PublicRoute><Landing /></PublicRoute>} />
+      <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />
     </Routes>
   );
 }
