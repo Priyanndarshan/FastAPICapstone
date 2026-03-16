@@ -1,7 +1,7 @@
 import { useEffect, useCallback, useState } from "react";
-import * as analyticsApi from "../api/analytics";
-import type { MonthlyAnalytics, TopCategory, TrendPoint } from "../types";
-import { parseApiError } from "../utils/parseApiError";
+import * as analyticsApi from "../../api/analytics";
+import type { MonthlyAnalytics, TopCategory, TrendPoint } from "../../types";
+import { parseApiError } from "../../utils/parseApiError";
 
 interface AnalyticsData {
     monthly: MonthlyAnalytics | null;

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { ROUTES } from "../config/constants";
+import { ROUTES } from "../config/routes";
 import { BackIcon, EditIcon, LogoutIcon } from "../components/ui/icons";
 import { input } from "../styles/ui";
 

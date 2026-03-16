@@ -22,3 +22,14 @@ export function formatMonthYear(month: number, year: number): string {
   const d = new Date(year, month - 1, 1);
   return d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
 }
+
+export function countExpensesInMonth(
+  expenses: { date: string }[],
+  month: number,
+  year: number
+): number {
+  return expenses.filter((e) => {
+    const [y, m] = e.date.split("-").map(Number);
+    return y === year && m === month;
+  }).length;
+}

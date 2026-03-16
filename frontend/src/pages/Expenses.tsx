@@ -1,5 +1,5 @@
-// Page deps: shared components, hooks, types
 import { useState, useCallback } from "react";
+import { useCategories } from "../hooks/categories/useCategories";
 import {
     CashFlowSummaryCard,
     ConfirmModal,
@@ -9,14 +9,12 @@ import {
     ExpenseTable,
     PageHeader,
 } from "../components/shared";
-import { useExpenses } from "../hooks/useExpenses";
-import { useExpenseFilters } from "../hooks/useExpenseFilters";
-import { usePaginatedExpenses, type SortOption } from "../hooks/usePaginatedExpenses";
-import { useCategories } from "../hooks/useCategories";
+import { useExpenses } from "../hooks/expenses/useExpenses";
+import { useExpenseFilters } from "../hooks/expenses/useExpenseFilters";
+import { usePaginatedExpenses, type SortOption } from "../hooks/expenses/usePaginatedExpenses";
 import type { Expense } from "../types";
-import type { ExpensePayload, ExpenseFilters } from "../api/expenses";
+import type { ExpenseFilters, ExpensePayload } from "../api/expenses";
 
-// Default form values for add/edit; date is today in YYYY-MM-DD
 const defaultPayload: ExpensePayload = {
     amount: "",
     date: new Date().toISOString().slice(0, 10),
@@ -27,7 +25,6 @@ const defaultPayload: ExpensePayload = {
     transaction_type: "out",
 };
 
-// Converts an Expense from API into form payload for editing
 function payloadFromExpense(e: Expense): ExpensePayload {
     return {
         amount: e.amount,
@@ -45,22 +42,27 @@ export default function Expenses() {
     const { categories } = useCategories();
     const { expenses, loading, error, refetch, addExpense, updateExpense, removeExpense } = useExpenses();
 
+    // pagination + sort (UI state)
     const [page, setPage] = useState(1);
     const [sortBy, setSortBy] = useState<SortOption>("date");
 
+    // add form (UI state)
     const [showAddForm, setShowAddForm] = useState<"in" | "out" | false>(false);
     const [form, setForm] = useState<ExpensePayload>(defaultPayload);
     const [adding, setAdding] = useState(false);
     const [addError, setAddError] = useState("");
 
+    // edit form (UI state)
     const [editId, setEditId] = useState<number | null>(null);
     const [editForm, setEditForm] = useState<ExpensePayload>(defaultPayload);
     const [editError, setEditError] = useState("");
     const [saving, setSaving] = useState(false);
 
+    // delete (UI state)
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [deleting, setDeleting] = useState(false);
 
+    // filters (hook owns dropdown states etc.)
     const onFilterChange = useCallback(
         (filters: ExpenseFilters) => {
             setPage(1);
@@ -69,11 +71,34 @@ export default function Expenses() {
         [refetch]
     );
     const filters = useExpenseFilters(onFilterChange);
-
     const paginated = usePaginatedExpenses(expenses, filters.filterRecurring, sortBy, page);
 
+    // derived cash summary
     const cashIn = expenses.filter((e) => e.transaction_type === "in").reduce((s, e) => s + Number(e.amount), 0);
     const cashOut = expenses.filter((e) => e.transaction_type === "out").reduce((s, e) => s + Number(e.amount), 0);
+
+    function handleSortChange(sort: SortOption) {
+        setSortBy(sort);
+        setPage(1);
+    }
+
+    function openAddCashIn() {
+        setShowAddForm("in");
+        setAddError("");
+        setForm({ ...defaultPayload, transaction_type: "in" });
+    }
+
+    function openAddCashOut() {
+        setShowAddForm("out");
+        setAddError("");
+        setForm({ ...defaultPayload, transaction_type: "out" });
+    }
+
+    function closeAddForm() {
+        setShowAddForm(false);
+        setAddError("");
+        setForm(defaultPayload);
+    }
 
     async function handleAdd(e: React.FormEvent) {
         e.preventDefault();
@@ -81,8 +106,7 @@ export default function Expenses() {
         setAddError("");
         try {
             await addExpense(form);
-            setForm(defaultPayload);
-            setShowAddForm(false);
+            closeAddForm();
         } catch (err) {
             setAddError((err as Error).message);
         } finally {
@@ -142,11 +166,7 @@ export default function Expenses() {
                     submitting={adding}
                     submitLabel={adding ? "Adding…" : "Add"}
                     onSubmit={handleAdd}
-                    onClose={() => {
-                        setShowAddForm(false);
-                        setAddError("");
-                        setForm(defaultPayload);
-                    }}
+                    onClose={closeAddForm}
                 />
             )}
 
@@ -155,37 +175,20 @@ export default function Expenses() {
             <ExpenseFiltersBar
                 filters={filters}
                 sortBy={sortBy}
-                onSortChange={(sort) => {
-                    setSortBy(sort);
-                    setPage(1);
-                }}
+                onSortChange={handleSortChange}
                 categories={categories}
-                onAddCashIn={() => {
-                    setShowAddForm("in");
-                    setAddError("");
-                    setForm({ ...defaultPayload, transaction_type: "in" });
-                }}
-                onAddCashOut={() => {
-                    setShowAddForm("out");
-                    setAddError("");
-                    setForm({ ...defaultPayload, transaction_type: "out" });
-                }}
+                onAddCashIn={openAddCashIn}
+                onAddCashOut={openAddCashOut}
             />
 
             {loading && (
-                <div className="py-12 text-center text-slate-500">
-                    Loading…
-                </div>
+                <div className="py-12 text-center text-slate-500">Loading…</div>
             )}
 
             {!loading && error && (
                 <div className="border-t border-slate-200 bg-red-50/50 p-6 text-center">
                     <p className="text-red-700">{error}</p>
-                    <button
-                        type="button"
-                        onClick={() => refetch()}
-                        className="mt-3 text-sm font-medium text-[#4863D4] hover:underline"
-                    >
+                    <button type="button" onClick={() => refetch()} className="mt-3 text-sm font-medium text-[#4863D4] hover:underline">
                         Try again
                     </button>
                 </div>
@@ -194,9 +197,7 @@ export default function Expenses() {
             {!loading && !error && expenses.length === 0 && (
                 <div className="border-t border-slate-200 py-16 text-center">
                     <p className="text-slate-500">No expenses yet.</p>
-                    <p className="mt-1 text-sm text-slate-400">
-                        Use &quot;Cash In&quot; or &quot;Cash Out&quot; above to add one, or clear filters.
-                    </p>
+                    <p className="mt-1 text-sm text-slate-400">Use "Cash In" or "Cash Out" above to add one, or clear filters.</p>
                 </div>
             )}
 

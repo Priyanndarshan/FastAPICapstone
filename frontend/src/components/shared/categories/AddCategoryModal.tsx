@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { MONTH_NAMES } from "../../../config/constants";
+import { useCategoryBudgetForm } from "../../../hooks/budgets/useCategoryBudgetForm";
 
 export interface AddCategoryModalProps {
     currentMonth: number;
@@ -14,40 +14,25 @@ export default function AddCategoryModal({
     onAdd,
     onClose,
 }: AddCategoryModalProps) {
-    const [name, setName] = useState("");
-    const [amount, setAmount] = useState("");
-    const [month, setMonth] = useState(currentMonth);
-    const [year, setYear] = useState(currentYear);
-    const [error, setError] = useState("");
-    const [saving, setSaving] = useState(false);
-
-    async function handleSubmit(e: React.FormEvent) {
-        e.preventDefault();
-        const trimmedName = name.trim();
-        const trimmedAmount = amount.trim();
-
-        if (!trimmedName) {
-            setError("Category name is required.");
-            return;
-        }
-        if (trimmedAmount) {
-            const num = parseFloat(trimmedAmount);
-            if (isNaN(num) || num <= 0) {
-                setError("Enter a valid budget amount.");
-                return;
-            }
-        }
-
-        setSaving(true);
-        setError("");
-        try {
-            await onAdd(trimmedName, trimmedAmount, month, year);
-        } catch (err) {
-            setError((err as Error).message);
-        } finally {
-            setSaving(false);
-        }
-    }
+    const {
+        name,
+        setName,
+        amount,
+        setAmount,
+        month,
+        setMonth,
+        year,
+        setYear,
+        error,
+        saving,
+        handleSubmit,
+    } = useCategoryBudgetForm({
+        initialName: "",
+        initialAmount: "",
+        initialMonth: currentMonth,
+        initialYear: currentYear,
+        onSubmit: onAdd,
+    });
 
     return (
         <div

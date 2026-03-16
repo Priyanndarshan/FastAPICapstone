@@ -1,13 +1,3 @@
-export const ROUTES = {
-  HOME: "/",
-  LOGIN: "/login",
-  REGISTER: "/register",
-  DASHBOARD: "/dashboard",
-  PROFILE: "/profile",
-  EXPENSES: "/expenses",
-  CATEGORIES: "/categories",
-} as const;
-
 export const MONTH_NAMES = Array.from({ length: 12 }, (_, i) =>
   new Date(2000, i, 1).toLocaleString("default", { month: "short" })
 );
@@ -22,9 +12,3 @@ export type PaymentMode = (typeof PAYMENT_MODES)[number];
 export const BRAND_COLOR = "#4863D4";
 export const BRAND_COLOR_HOVER = "#3a50b8";
 export const BRAND_COLOR_LIGHT = "#e8ecfc";
-
-export const NAV_LINKS = [
-  { label: "Dashboard", path: ROUTES.DASHBOARD },
-  { label: "Expenses", path: ROUTES.EXPENSES },
-  { label: "Categories", path: ROUTES.CATEGORIES },
-] as const;

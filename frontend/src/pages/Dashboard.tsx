@@ -1,16 +1,15 @@
 // Page deps: AuthContext, routing, config, shared components + icons, data hooks, formatters
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { Link } from "react-router-dom";
-import { ROUTES, MONTH_NAMES } from "../config/constants";
-import { PageHeader, SpendingTrendChart, CategorySpendingPieChart } from "../components/shared";
-import { CloseIcon } from "../components/ui/icons";
-import { useAnalytics } from "../hooks/useAnalytics";
-import { useExpenses } from "../hooks/useExpenses";
-import { useCategories } from "../hooks/useCategories";
-import { useBudgets } from "../hooks/useBudgets";
-import { useBudgetByCategory } from "../hooks/useBudgetByCategory";
-import { formatAmount } from "../utils/formatters";
+import { MONTH_NAMES } from "../config/constants";
+import { PageHeader, SpendingTrendChart, CategorySpendingPieChart, OverBudgetBanner, RecentExpenses } from "../components/shared";
+import { useAnalytics } from "../hooks/analytics/useAnalytics";
+import { useExpenses } from "../hooks/expenses/useExpenses";
+import { useCategories } from "../hooks/categories/useCategories";
+import { useBudgets } from "../hooks/budgets/useBudgets";
+import { useBudgetByCategory } from "../hooks/categories/useBudgetByCategory";
+import { useOverBudgetCategories } from "../hooks/categories/useOverBudgetCategories";
+import { countExpensesInMonth } from "../utils/formatters";
 
 export default function Dashboard() {
     // Current user and local UI state: whether the over-budget warning banner has been dismissed
@@ -30,39 +29,15 @@ export default function Dashboard() {
     const { categories } = useCategories();
     const { budgets } = useBudgets();
 
-    // First 5 expenses for "Recent expenses" list; helper to resolve category id to name
-    const recentExpenses = expenses.slice(0, 5);
-    const getCategoryName = (id: number | null) =>
-        id ? categories.find((c) => c.id === id)?.name ?? "—" : "—";
-
     // Map categoryId → { limit, spent } for current month; merges budgets with monthly analytics spending
     const budgetByCategory = useBudgetByCategory(currentMonth, currentYear, budgets, monthly);
 
     // List of categories where spent > limit this month; used for the red warning banner
-    const overBudgetCategories = useMemo(() => {
-        const list: { categoryId: number; name: string; limit: number; spent: number; overAmount: number }[] = [];
-        for (const [categoryId, data] of Object.entries(budgetByCategory)) {
-            if (data.limit > 0 && data.spent > data.limit) {
-                const catId = Number(categoryId);
-                const name = categories.find((c) => c.id === catId)?.name ?? "—";
-                list.push({
-                    categoryId: catId,
-                    name,
-                    limit: data.limit,
-                    spent: data.spent,
-                    overAmount: data.spent - data.limit,
-                });
-            }
-        }
-        return list;
-    }, [budgetByCategory, categories]);
+    const overBudgetCategories = useOverBudgetCategories(budgetByCategory, categories);
 
     // Header description and badge: "X transactions this month", "Y categories"
     const periodLabel = `${MONTH_NAMES[currentMonth - 1]} ${currentYear}`;
-    const thisMonthCount = expenses.filter((e) => {
-        const [y, m] = e.date.split("-").map(Number);
-        return y === currentYear && m === currentMonth;
-    }).length;
+    const thisMonthCount = countExpensesInMonth(expenses, currentMonth, currentYear);
 
     // Layout: header with welcome + badges, over-budget warning (dismissible), analytics error, then two-column grid + trend chart
     return (
@@ -83,24 +58,12 @@ export default function Dashboard() {
                 }
             />
 
-            {/* Dismissible banner when any category is over budget; link to Categories to adjust */}
+            {/* Dismissible banner when any category is over budget */}
             {overBudgetCategories.length > 0 && !budgetWarningDismissed && (
-                <div className="flex items-center gap-4 rounded-xl border border-red-200 bg-red-50 px-5 py-3">
-                    <p className="flex-1 min-w-0 text-sm font-medium text-red-800">
-                        Budget exceeded: {overBudgetCategories.map((c) => c.name).join(", ")}.
-                        <Link to={ROUTES.CATEGORIES} className="ml-1 font-medium text-red-700 hover:text-red-900 underline">
-                            Adjust →
-                        </Link>
-                    </p>
-                    <button
-                        type="button"
-                        onClick={() => setBudgetWarningDismissed(true)}
-                        className="shrink-0 rounded p-1.5 text-red-600 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-400"
-                        aria-label="Dismiss warning"
-                    >
-                        <CloseIcon className="h-5 w-5" />
-                    </button>
-                </div>
+                <OverBudgetBanner
+                    categories={overBudgetCategories}
+                    onDismiss={() => setBudgetWarningDismissed(true)}
+                />
             )}
 
             {/* Shown when useAnalytics returns an error; "Try again" calls refetchAnalytics */}
@@ -119,57 +82,11 @@ export default function Dashboard() {
 
             {/* Two columns: recent expenses card (left) and category pie chart (right) */}
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-                {/* Recent expenses: loading skeleton, empty state with link to Expenses, or list of up to 5 items */}
-                <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                    <div className="border-b border-slate-200 px-5 py-4">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-base font-semibold text-slate-900">Recent expenses</h2>
-                            <Link
-                                to={ROUTES.EXPENSES}
-                                className="text-sm font-medium text-[#4863D4] hover:text-[#3a50b8]"
-                            >
-                                View all →
-                            </Link>
-                        </div>
-                        <p className="mt-0.5 text-xs text-slate-500">Latest transactions</p>
-                    </div>
-                    <div className="px-5 py-4">
-                        {expensesLoading ? (
-                            <div className="space-y-3">
-                                {[1, 2, 3].map((i) => (
-                                    <div key={i} className="flex justify-between">
-                                        <div className="h-4 w-32 animate-pulse rounded bg-slate-100" />
-                                        <div className="h-4 w-16 animate-pulse rounded bg-slate-100" />
-                                    </div>
-                                ))}
-                            </div>
-                        ) : recentExpenses.length === 0 ? (
-                            <p className="py-6 text-center text-sm text-slate-500">
-                                No expenses yet. <Link to={ROUTES.EXPENSES} className="font-medium text-[#4863D4] hover:underline">Add one</Link>.
-                            </p>
-                        ) : (
-                            <ul className="divide-y divide-slate-100">
-                                {recentExpenses.map((exp) => (
-                                    <li key={exp.id} className="flex items-center justify-between py-3 first:pt-0">
-                                        <div className="min-w-0 flex-1">
-                                            <p className="font-medium text-slate-800 truncate">
-                                                {getCategoryName(exp.category_id)}
-                                            </p>
-                                            {exp.notes && (
-                                                <p className="truncate text-xs text-slate-500" title={exp.notes}>
-                                                    {exp.notes}
-                                                </p>
-                                            )}
-                                        </div>
-                                        <span className={`ml-4 shrink-0 tabular-nums text-sm font-medium ${exp.transaction_type === "in" ? "text-[#4863D4]" : "text-red-600"}`}>
-                                            {exp.transaction_type === "in" ? "+" : ""}{formatAmount(Number(exp.amount))} <span className="text-slate-400">({exp.payment_mode})</span>
-                                        </span>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </div>
-                </section>
+                <RecentExpenses
+                    expenses={expenses.slice(0, 5)}
+                    categories={categories}
+                    loading={expensesLoading}
+                />
 
                 {/* Pie chart for selected month/year; month/year controlled by dropdown in component */}
                 <CategorySpendingPieChart

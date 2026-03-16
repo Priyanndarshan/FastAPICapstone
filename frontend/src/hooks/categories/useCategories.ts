@@ -1,9 +1,9 @@
 // Used by: Categories.tsx (full CRUD + loading/error/refetch), Expenses.tsx and Dashboard.tsx (categories list only).
 // Depends on: api/categories (backend), types (Category), utils/parseApiError.
 import { useEffect, useState } from "react";
-import * as categoriesApi from "../api/categories";
-import type { Category } from "../types";
-import { parseApiError } from "../utils/parseApiError";
+import * as categoriesApi from "../../api/categories";
+import type { Category } from "../../types";
+import { parseApiError } from "../../utils/parseApiError";
 
 export function useCategories() {
     // Holds categories array + loading/error state for async operations.

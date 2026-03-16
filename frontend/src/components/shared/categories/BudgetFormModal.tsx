@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
 import { MONTH_NAMES } from "../../../config/constants";
+import { useCategoryBudgetForm } from "../../../hooks/budgets/useCategoryBudgetForm";
 
 export interface BudgetFormModalProps {
     title: string;
@@ -20,46 +20,25 @@ export default function BudgetFormModal({
     onSave,
     onClose,
 }: BudgetFormModalProps) {
-    const [name, setName] = useState(initialName);
-    const [amount, setAmount] = useState(initialAmount);
-    const [month, setMonth] = useState(currentMonth);
-    const [year, setYear] = useState(currentYear);
-    const [error, setError] = useState("");
-    const [saving, setSaving] = useState(false);
-
-    useEffect(() => {
-        setName(initialName);
-    }, [initialName]);
-
-    useEffect(() => {
-        setAmount(initialAmount);
-    }, [initialAmount]);
-
-    async function handleSubmit(e: React.FormEvent) {
-        e.preventDefault();
-        const trimmedName = name.trim();
-        const trimmedAmount = amount.trim();
-
-        if (!trimmedName) {
-            setError("Category name is required.");
-            return;
-        }
-        const num = parseFloat(trimmedAmount);
-        if (!trimmedAmount || isNaN(num) || num <= 0) {
-            setError("Enter a valid amount.");
-            return;
-        }
-
-        setSaving(true);
-        setError("");
-        try {
-            await onSave(trimmedName, trimmedAmount, month, year);
-        } catch (err) {
-            setError((err as Error).message);
-        } finally {
-            setSaving(false);
-        }
-    }
+    const {
+        name,
+        setName,
+        amount,
+        setAmount,
+        month,
+        setMonth,
+        year,
+        setYear,
+        error,
+        saving,
+        handleSubmit,
+    } = useCategoryBudgetForm({
+        initialName,
+        initialAmount,
+        initialMonth: currentMonth,
+        initialYear: currentYear,
+        onSubmit: onSave,
+    });
 
     return (
         <div

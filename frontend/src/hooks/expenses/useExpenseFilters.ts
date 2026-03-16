@@ -1,7 +1,7 @@
 // Used by: Expenses.tsx. Provides filter state, dropdown open/refs, outside-click close, and builds ExpenseFilters for API. Depends on: api/expenses (ExpenseFilters).
 import type { RefObject } from "react";
 import { useState, useRef, useEffect } from "react";
-import type { ExpenseFilters } from "../api/expenses";
+import type { ExpenseFilters } from "../../api/expenses";
 
 // Optional: pass export menu ref + setter so the hook closes the export dropdown on outside click
 export interface UseExpenseFiltersOptions {

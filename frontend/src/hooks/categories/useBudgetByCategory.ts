@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { Budget, MonthlyAnalytics } from "../types";
+import type { Budget, MonthlyAnalytics } from "../../types";
 
 /**
  * Derives a map of categoryId → { limit, spent } for a given month/year.

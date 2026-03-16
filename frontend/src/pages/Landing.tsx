@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ROUTES } from "../config/constants";
+import { ROUTES } from "../config/routes";
 
 export default function Landing() {
     return (

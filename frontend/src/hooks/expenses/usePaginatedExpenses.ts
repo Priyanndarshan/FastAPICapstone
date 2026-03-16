@@ -1,6 +1,6 @@
 // Used by: Expenses.tsx for paginated table. Depends on: types (Expense).
 import { useMemo } from "react";
-import type { Expense } from "../types";
+import type { Expense } from "../../types";
 
 // Page size for table; used to slice and to compute totalPages
 const PAGE_SIZE = 10;
@@ -21,8 +21,8 @@ export function usePaginatedExpenses(
             filterRecurring === "true"
                 ? expenses.filter((e) => e.is_recurring)
                 : filterRecurring === "false"
-                  ? expenses.filter((e) => !e.is_recurring)
-                  : expenses;
+                    ? expenses.filter((e) => !e.is_recurring)
+                    : expenses;
 
         // Step 2: sort by amount_desc (high→low), amount_asc (low→high), or date (newest first, then by id)
         const sorted = [...filtered].sort((a, b) => {

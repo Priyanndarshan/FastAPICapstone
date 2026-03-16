@@ -1,4 +1,4 @@
-import { useExpenseFilters } from "../../../hooks/useExpenseFilters";
+import { useExpenseFilters } from "../../../hooks/expenses/useExpenseFilters";
 import type { Category } from "../../../types";
 import { DatePicker } from "../../ui/DatePicker";
 import {
@@ -61,8 +61,8 @@ export default function ExpenseFiltersBar({
                                         <label
                                             key={value}
                                             className={`flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${filters.duration === value
-                                                    ? "bg-[#e8ecfc] text-slate-900"
-                                                    : "text-slate-700 hover:bg-slate-50"
+                                                ? "bg-[#e8ecfc] text-slate-900"
+                                                : "text-slate-700 hover:bg-slate-50"
                                                 }`}
                                         >
                                             <input
@@ -139,8 +139,8 @@ export default function ExpenseFiltersBar({
                                         <label
                                             key={value || "all"}
                                             className={`flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${filters.filterType === value
-                                                    ? "bg-[#e8ecfc] text-slate-900"
-                                                    : "text-slate-700 hover:bg-slate-50"
+                                                ? "bg-[#e8ecfc] text-slate-900"
+                                                : "text-slate-700 hover:bg-slate-50"
                                                 }`}
                                         >
                                             <input
@@ -203,8 +203,8 @@ export default function ExpenseFiltersBar({
                                         <label
                                             key={mode}
                                             className={`flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${filters.paymentModeSelected.includes(mode)
-                                                    ? "bg-[#e8ecfc] text-slate-900"
-                                                    : "text-slate-700 hover:bg-slate-50"
+                                                ? "bg-[#e8ecfc] text-slate-900"
+                                                : "text-slate-700 hover:bg-slate-50"
                                                 }`}
                                         >
                                             <input
@@ -261,8 +261,8 @@ export default function ExpenseFiltersBar({
                                 <div className="overflow-y-auto px-2 py-2">
                                     <label
                                         className={`flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${!filters.filterCategoryId
-                                                ? "bg-[#e8ecfc] text-slate-900"
-                                                : "text-slate-700 hover:bg-slate-50"
+                                            ? "bg-[#e8ecfc] text-slate-900"
+                                            : "text-slate-700 hover:bg-slate-50"
                                             }`}
                                     >
                                         <input
@@ -278,8 +278,8 @@ export default function ExpenseFiltersBar({
                                         <label
                                             key={c.id}
                                             className={`flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${filters.filterCategoryId === String(c.id)
-                                                    ? "bg-[#e8ecfc] text-slate-900"
-                                                    : "text-slate-700 hover:bg-slate-50"
+                                                ? "bg-[#e8ecfc] text-slate-900"
+                                                : "text-slate-700 hover:bg-slate-50"
                                                 }`}
                                         >
                                             <input
@@ -338,8 +338,8 @@ export default function ExpenseFiltersBar({
                                         <label
                                             key={value || "all"}
                                             className={`flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${filters.filterRecurring === value
-                                                    ? "bg-[#e8ecfc] text-slate-900"
-                                                    : "text-slate-700 hover:bg-slate-50"
+                                                ? "bg-[#e8ecfc] text-slate-900"
+                                                : "text-slate-700 hover:bg-slate-50"
                                                 }`}
                                         >
                                             <input
@@ -428,8 +428,8 @@ export default function ExpenseFiltersBar({
                                         <label
                                             key={value}
                                             className={`flex cursor-pointer items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-colors ${sortBy === value
-                                                    ? "bg-[#e8ecfc] text-slate-900"
-                                                    : "text-slate-700 hover:bg-slate-50"
+                                                ? "bg-[#e8ecfc] text-slate-900"
+                                                : "text-slate-700 hover:bg-slate-50"
                                                 }`}
                                         >
                                             <input

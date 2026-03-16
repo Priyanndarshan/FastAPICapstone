@@ -7,6 +7,10 @@ export { default as TopNav } from "./layout/TopNav";
 export { default as ConfirmModal } from "./ui/ConfirmModal";
 export { default as PageHeader } from "./ui/PageHeader";
 export { default as CashFlowSummaryCard } from "./ui/CashFlowSummaryCard";
+export { default as OverBudgetBanner } from "./ui/OverBudgetBanner";
+
+// dashboard
+export { default as RecentExpenses } from "./dashboard/RecentExpenses";
 
 // charts
 export { default as SpendingTrendChart } from "./charts/SpendingTrendChart";

@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../contexts/AuthContext";
 import { Popover, PopoverContent, PopoverTrigger } from "../../ui/Popover";
 import { ChevronDownIcon, LogoutIcon } from "../../ui/icons";
-import { ROUTES } from "../../../config/constants";
+import { ROUTES } from "../../../config/routes";
 
 function Avatar({ name, size = "md" }: { name: string; size?: "sm" | "md" }) {
   const initial = (name || "?").trim().charAt(0).toUpperCase();
