@@ -1,4 +1,4 @@
-import client from "./client";
+import api from "./client";
 import type { Expense } from "../types";
 
 export interface ExpenseFilters {
@@ -22,25 +22,25 @@ export interface ExpensePayload {
 }
 
 export async function getExpenses(filters?: ExpenseFilters): Promise<Expense[]> {
-    const res = await client.get("/expenses", { params: filters });
+    const res = await api.get("/expenses", { params: filters });
     return res.data;
 }
 
 export async function getExpense(id: number): Promise<Expense> {
-    const res = await client.get(`/expenses/${id}`);
+    const res = await api.get(`/expenses/${id}`);
     return res.data;
 }
 
 export async function createExpense(payload: ExpensePayload): Promise<Expense> {
-    const res = await client.post("/expenses", payload);
+    const res = await api.post("/expenses", payload);
     return res.data;
 }
 
 export async function updateExpense(id: number, payload: Partial<ExpensePayload>): Promise<Expense> {
-    const res = await client.put(`/expenses/${id}`, payload);
+    const res = await api.put(`/expenses/${id}`, payload);
     return res.data;
 }
 
 export async function deleteExpense(id: number): Promise<void> {
-    await client.delete(`/expenses/${id}`);
+    await api.delete(`/expenses/${id}`);
 }

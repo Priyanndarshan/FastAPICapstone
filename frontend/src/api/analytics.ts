@@ -1,4 +1,4 @@
-import client from "./client";
+import api from "./client";
 import type { MonthlyAnalytics, TopCategory, TrendPoint } from "../types";
 
 export interface TrendResponse {
@@ -6,7 +6,7 @@ export interface TrendResponse {
 }
 
 export async function getMonthlyAnalytics(month: number, year: number): Promise<MonthlyAnalytics> {
-    const res = await client.get("/analytics/monthly", { params: { month, year } });
+    const res = await api.get("/analytics/monthly", { params: { month, year } });
     const data = res.data;
     return {
         ...data,
@@ -20,7 +20,7 @@ export async function getMonthlyAnalytics(month: number, year: number): Promise<
 
 export async function getTopCategory(month: number, year: number): Promise<TopCategory | null> {
     try {
-        const res = await client.get("/analytics/top-category", { params: { month, year } });
+        const res = await api.get("/analytics/top-category", { params: { month, year } });
         const data = res.data;
         return {
             ...data,
@@ -34,7 +34,7 @@ export async function getTopCategory(month: number, year: number): Promise<TopCa
 }
 
 export async function getTrend(months = 6): Promise<TrendResponse> {
-    const res = await client.get("/analytics/trend", { params: { months } });
+    const res = await api.get("/analytics/trend", { params: { months } });
     const data = res.data;
     return {
         points: (data.points ?? []).map((p: { total_spent?: unknown }) => ({

@@ -10,9 +10,9 @@ import {
     XAxis,
     YAxis,
 } from "recharts";
-import { MONTH_NAMES } from "../../config/constants";
-import { formatAmount } from "../../utils/formatters";
-import type { TrendPoint } from "../../types";
+import { MONTH_NAMES } from "../../../config/constants";
+import { formatAmount } from "../../../utils/formatters";
+import type { TrendPoint } from "../../../types";
 
 interface SpendingTrendChartProps {
     trend: TrendPoint[];

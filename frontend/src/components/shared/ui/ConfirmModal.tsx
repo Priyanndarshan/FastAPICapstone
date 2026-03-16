@@ -1,4 +1,4 @@
-import { modal, modalPanel, btnSecondary, btnDanger } from "../../styles/ui";
+import { modal, modalPanel, btnSecondary, btnDanger } from "../../../styles/ui";
 
 export interface ConfirmModalProps {
     message: string;

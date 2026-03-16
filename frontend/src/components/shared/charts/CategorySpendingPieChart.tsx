@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 import { Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { formatAmount } from "../../utils/formatters";
-import { MONTH_NAMES } from "../../config/constants";
-import type { MonthlyAnalytics } from "../../types";
+import { formatAmount } from "../../../utils/formatters";
+import { MONTH_NAMES } from "../../../config/constants";
+import type { MonthlyAnalytics } from "../../../types";
 
 const CHART_COLORS = [
     "rgb(72 99 212)",   // #4863D4

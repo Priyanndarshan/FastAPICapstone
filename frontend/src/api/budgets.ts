@@ -1,4 +1,4 @@
-import client from "./client";
+import api from "./client";
 import type { Budget } from "../types";
 
 export interface BudgetCreatePayload {
@@ -15,25 +15,25 @@ export interface BudgetUpdatePayload {
 }
 
 export async function getBudgets(): Promise<Budget[]> {
-    const res = await client.get("/budgets");
+    const res = await api.get("/budgets");
     return res.data;
 }
 
 export async function getBudget(id: number): Promise<Budget> {
-    const res = await client.get(`/budgets/${id}`);
+    const res = await api.get(`/budgets/${id}`);
     return res.data;
 }
 
 export async function createBudget(payload: BudgetCreatePayload): Promise<Budget> {
-    const res = await client.post("/budgets", payload);
+    const res = await api.post("/budgets", payload);
     return res.data;
 }
 
 export async function updateBudget(id: number, payload: BudgetUpdatePayload): Promise<Budget> {
-    const res = await client.put(`/budgets/${id}`, payload);
+    const res = await api.put(`/budgets/${id}`, payload);
     return res.data;
 }
 
 export async function deleteBudget(id: number): Promise<void> {
-    await client.delete(`/budgets/${id}`);
+    await api.delete(`/budgets/${id}`);
 }

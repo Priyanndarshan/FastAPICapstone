@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { NAV_LINKS } from "../../config/constants";
+import { NAV_LINKS } from "../../../config/constants";
 
 export default function Navbar() {
     const location = useLocation();

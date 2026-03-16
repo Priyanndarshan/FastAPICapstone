@@ -1,5 +1,5 @@
-import { formatAmount } from "../../utils/formatters";
-import { PlusIcon, MinusIcon, BalanceIcon } from "../ui/icons";
+import { formatAmount } from "../../../utils/formatters";
+import { PlusIcon, MinusIcon, BalanceIcon } from "../../ui/icons";
 
 interface CashFlowSummaryCardProps {
     cashIn: number;

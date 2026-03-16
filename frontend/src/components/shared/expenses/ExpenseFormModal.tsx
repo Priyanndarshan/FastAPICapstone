@@ -1,9 +1,9 @@
-import type { ExpensePayload } from "../../api/expenses";
-import type { Category } from "../../types";
-import { DatePicker } from "../ui/DatePicker";
-import { CloseIcon } from "../ui/icons";
-import { PAYMENT_MODES } from "../../config/constants";
-import { input, btnPrimary, btnSecondary } from "../../styles/ui";
+import type { ExpensePayload } from "../../../api/expenses";
+import type { Category } from "../../../types";
+import { DatePicker } from "../../ui/DatePicker";
+import { CloseIcon } from "../../ui/icons";
+import { PAYMENT_MODES } from "../../../config/constants";
+import { input, btnPrimary, btnSecondary } from "../../../styles/ui";
 
 export interface ExpenseFormModalProps {
     title: string;

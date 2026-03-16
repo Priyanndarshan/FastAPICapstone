@@ -6,9 +6,8 @@ import { useBudgets } from "../hooks/useBudgets";
 import { useAnalytics } from "../hooks/useAnalytics";
 import type { Category } from "../types";
 import { MONTH_NAMES } from "../config/constants";
-import { formatAmount } from "../utils/formatters";
-import { ConfirmModal, PageHeader } from "../components/shared";
-import { PlusIcon, CategoryIcon, DeleteIcon } from "../components/ui/icons";
+import { AddCategoryModal, BudgetFormModal, CategoryRow, ConfirmModal, PageHeader } from "../components/shared";
+import { PlusIcon } from "../components/ui/icons";
 
 // Current month/year used for budget defaults and "this month" filtering; computed once at module load
 const now = new Date();
@@ -44,97 +43,52 @@ export default function Categories() {
         return map;
     }, [budgets, monthly]);
 
-    // "Add category" modal state: visibility, form fields (name, amount, month, year), validation error, and saving flag
-    const [addModal, setAddModal] = useState({
-        open: false,
-        name: "",
-        amount: "",
-        month: currentMonth,
-        year: currentYear,
-        error: "",
-        saving: false,
-    });
+    // "Add category" modal state: only visibility; form state lives in AddCategoryModal
+    const [addModal, setAddModal] = useState({ open: false });
 
     // Delete confirmation: which category id is selected for delete (null = modal closed); deleting = request in progress
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [deleting, setDeleting] = useState(false);
 
-    // "Add/Edit budget" modal state: which category, name, month/year, amount, error, saving. Shared for both add and edit flows.
-    const [budgetForm, setBudgetForm] = useState<{
-        categoryId: number | null;
-        name: string;
-        month: number;
-        year: number;
-        amount: string;
-        error: string;
-        saving: boolean;
-    }>({
+    // "Add/Edit budget" modal state: which category is active; form state lives in BudgetFormModal
+    const [budgetForm, setBudgetForm] = useState<{ categoryId: number | null }>({
         categoryId: null,
-        name: "",
-        month: currentMonth,
-        year: currentYear,
-        amount: "",
-        error: "",
-        saving: false,
     });
 
-    // Opens add-category modal and resets form to current month/year and empty name/amount
+    // Initial values passed into BudgetFormModal when opening
+    const [budgetFormInitial, setBudgetFormInitial] = useState({
+        name: "",
+        amount: "",
+    });
+
+    // Opens add-category modal
     function openAddModal() {
-        setAddModal((prev) => ({
-            ...prev,
-            open: true,
-            name: "",
-            amount: "",
-            month: currentMonth,
-            year: currentYear,
-            error: "",
-        }));
+        setAddModal({ open: true });
     }
 
-    // Closes add modal and clears all fields; used on cancel or after successful submit
+    // Closes add modal; used on cancel or after successful submit
     function closeAddModal() {
-        setAddModal({
-            open: false,
-            name: "",
-            amount: "",
-            month: currentMonth,
-            year: currentYear,
-            error: "",
-            saving: false,
-        });
+        setAddModal({ open: false });
     }
 
-    // Submit handler for "Add category" form: validates name/amount, calls addCategory (API), then addBudget if amount given; closes modal on success, sets error on failure
-    async function handleAddCategoryWithBudget(e: React.FormEvent) {
-        e.preventDefault();
-        const name = addModal.name.trim();
-        if (!name) {
-            setAddModal((prev) => ({ ...prev, error: "Category name is required." }));
-            return;
+    // Submit handler for "Add category" form: called from AddCategoryModal with validated values
+    async function handleAddCategoryWithBudget(
+        name: string,
+        amount: string,
+        month: number,
+        year: number
+    ) {
+        const amountNum = amount ? parseFloat(amount) : 0;
+        const cat = await addCategory(name);
+        if (amount && !isNaN(amountNum) && amountNum > 0) {
+            await addBudget({
+                category_id: cat.id,
+                month,
+                year,
+                limit_amount: amount,
+            });
         }
-        const amountStr = addModal.amount.trim();
-        const amountNum = amountStr ? parseFloat(amountStr) : 0;
-        if (amountStr && (isNaN(amountNum) || amountNum <= 0)) {
-            setAddModal((prev) => ({ ...prev, error: "Enter a valid budget amount." }));
-            return;
-        }
-        setAddModal((prev) => ({ ...prev, saving: true, error: "" }));
-        try {
-            const cat = await addCategory(name);
-            if (amountStr && !isNaN(amountNum) && amountNum > 0) {
-                await addBudget({
-                    category_id: cat.id,
-                    month: addModal.month,
-                    year: addModal.year,
-                    limit_amount: amountStr,
-                });
-            }
-            closeAddModal();
-        } catch (err) {
-            setAddModal((prev) => ({ ...prev, error: (err as Error).message }));
-        } finally {
-            setAddModal((prev) => ({ ...prev, saving: false }));
-        }
+        closeAddModal();
     }
 
     // Runs when user confirms delete: calls removeCategory (API), then clears deleteId to close ConfirmModal
@@ -149,52 +103,32 @@ export default function Categories() {
         }
     }
 
-    // Opens budget modal for a category: pre-fills name from categories, amount/month/year from existing budget for current month if any
+    // Opens budget modal for a category: pre-fills initial name and amount; month/year come from currentMonth/currentYear
     function openBudgetForm(categoryId: number) {
         const cat = categories.find((c) => c.id === categoryId);
         const existing = budgets.find(
             (b) => b.category_id === categoryId && b.month === currentMonth && b.year === currentYear
         );
-        setBudgetForm((prev) => ({
-            ...prev,
-            categoryId,
+        setBudgetForm({ categoryId });
+        setBudgetFormInitial({
             name: cat?.name ?? "",
-            month: currentMonth,
-            year: currentYear,
             amount: existing ? existing.limit_amount : "",
-            error: "",
-        }));
-    }
-
-    // Closes budget modal and resets form; used on cancel or after successful save
-    function closeBudgetForm() {
-        setBudgetForm({
-            categoryId: null,
-            name: "",
-            month: currentMonth,
-            year: currentYear,
-            amount: "",
-            error: "",
-            saving: false,
         });
     }
 
-    // Submit handler for budget form: validates name/amount; updates category name via updateCategory if changed; then updateBudget or addBudget (API) and closes modal
-    async function handleSaveBudget(e: React.FormEvent) {
-        e.preventDefault();
+    // Closes budget modal; used on cancel or after successful save
+    function closeBudgetForm() {
+        setBudgetForm({ categoryId: null });
+    }
+
+    // Submit handler for budget form: called from BudgetFormModal with validated values
+    async function handleSaveBudget(
+        name: string,
+        amount: string,
+        month: number,
+        year: number
+    ) {
         if (budgetForm.categoryId == null) return;
-        const name = budgetForm.name.trim();
-        if (!name) {
-            setBudgetForm((prev) => ({ ...prev, error: "Category name is required." }));
-            return;
-        }
-        const amount = budgetForm.amount.trim();
-        const num = parseFloat(amount);
-        if (!amount || isNaN(num) || num <= 0) {
-            setBudgetForm((prev) => ({ ...prev, error: "Enter a valid amount." }));
-            return;
-        }
-        setBudgetForm((prev) => ({ ...prev, saving: true, error: "" }));
         try {
             const cat = categories.find((c) => c.id === budgetForm.categoryId);
             if (cat && name !== cat.name) {
@@ -203,24 +137,24 @@ export default function Categories() {
             const existing = budgets.find(
                 (b) =>
                     b.category_id === budgetForm.categoryId &&
-                    b.month === budgetForm.month &&
-                    b.year === budgetForm.year
+                    b.month === month &&
+                    b.year === year
             );
             if (existing) {
                 await updateBudget(existing.id, { limit_amount: amount });
             } else {
                 await addBudget({
                     category_id: budgetForm.categoryId,
-                    month: budgetForm.month,
-                    year: budgetForm.year,
+                    month,
+                    year,
                     limit_amount: amount,
                 });
             }
             closeBudgetForm();
         } catch (err) {
-            setBudgetForm((prev) => ({ ...prev, error: (err as Error).message }));
+            // Error is surfaced in BudgetFormModal via thrown message
+            throw err;
         } finally {
-            setBudgetForm((prev) => ({ ...prev, saving: false }));
         }
     }
 
@@ -293,183 +227,36 @@ export default function Categories() {
                 </ul>
             )}
 
-            {/* Add/Edit budget modal overlay; form submits to handleSaveBudget; backdrop click closes via closeBudgetForm */}
+            {/* Budget form modal */}
             {budgetForm.categoryId !== null && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 p-4"
-                    onClick={closeBudgetForm}
-                >
-                    <div
-                        className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-6 shadow-xl"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <h3 className="text-lg font-semibold text-slate-900">
-                            {budgets.some(
-                                (b) =>
-                                    b.category_id === budgetForm.categoryId &&
-                                    b.month === budgetForm.month &&
-                                    b.year === budgetForm.year
-                            )
-                                ? "Edit budget"
-                                : "Add budget"}
-                        </h3>
-                        <form onSubmit={handleSaveBudget} className="mt-4 space-y-4">
-                            <label className="block">
-                                <span className="mb-1 block text-xs font-medium text-slate-500">Category name</span>
-                                <input
-                                    type="text"
-                                    value={budgetForm.name}
-                                    onChange={(e) => setBudgetForm((prev) => ({ ...prev, name: e.target.value }))}
-                                    placeholder="e.g. Fitness, Groceries"
-                                    maxLength={100}
-                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-[#4863D4] focus:outline-none focus:ring-2 focus:ring-[#4863D4]/20"
-                                />
-                            </label>
-                            <div className="grid grid-cols-2 gap-3">
-                                <label className="block">
-                                    <span className="mb-1 block text-xs font-medium text-slate-500">Month</span>
-                                    <select
-                                        value={budgetForm.month}
-                                        onChange={(e) => setBudgetForm((prev) => ({ ...prev, month: Number(e.target.value) }))}
-                                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-[#4863D4] focus:outline-none focus:ring-2 focus:ring-[#4863D4]/20"
-                                    >
-                                        {MONTH_NAMES.map((name, i) => (
-                                            <option key={name} value={i + 1}>{name}</option>
-                                        ))}
-                                    </select>
-                                </label>
-                                <label className="block">
-                                    <span className="mb-1 block text-xs font-medium text-slate-500">Year</span>
-                                    <select
-                                        value={budgetForm.year}
-                                        onChange={(e) => setBudgetForm((prev) => ({ ...prev, year: Number(e.target.value) }))}
-                                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-[#4863D4] focus:outline-none focus:ring-2 focus:ring-[#4863D4]/20"
-                                    >
-                                        {[currentYear - 1, currentYear, currentYear + 1].map((y) => (
-                                            <option key={y} value={y}>{y}</option>
-                                        ))}
-                                    </select>
-                                </label>
-                            </div>
-                            <label className="block">
-                                <span className="mb-1 block text-xs font-medium text-slate-500">Amount</span>
-                                <input
-                                    type="text"
-                                    inputMode="decimal"
-                                    value={budgetForm.amount}
-                                    onChange={(e) => setBudgetForm((prev) => ({ ...prev, amount: e.target.value }))}
-                                    placeholder="0.00"
-                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-[#4863D4] focus:outline-none focus:ring-2 focus:ring-[#4863D4]/20"
-                                />
-                            </label>
-                            {budgetForm.error && (
-                                <p className="text-sm text-red-600">{budgetForm.error}</p>
-                            )}
-                            <div className="flex gap-2 pt-2">
-                                <button
-                                    type="button"
-                                    onClick={closeBudgetForm}
-                                    className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={budgetForm.saving || !budgetForm.name.trim() || !budgetForm.amount.trim()}
-                                    className="rounded-lg bg-[#4863D4] px-4 py-2 text-sm font-medium text-white hover:bg-[#3a50b8] disabled:opacity-50"
-                                >
-                                    {budgetForm.saving ? "Saving…" : "Save"}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+                <BudgetFormModal
+                    title={
+                        budgets.some(
+                            (b) =>
+                                b.category_id === budgetForm.categoryId &&
+                                b.month === currentMonth &&
+                                b.year === currentYear
+                        )
+                            ? "Edit budget"
+                            : "Add budget"
+                    }
+                    initialName={budgetFormInitial.name}
+                    initialAmount={budgetFormInitial.amount}
+                    currentMonth={currentMonth}
+                    currentYear={currentYear}
+                    onSave={handleSaveBudget}
+                    onClose={closeBudgetForm}
+                />
             )}
 
-            {/* Add category modal overlay; form submits to handleAddCategoryWithBudget; backdrop click closes via closeAddModal */}
+            {/* Add category modal */}
             {addModal.open && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 p-4"
-                    onClick={closeAddModal}
-                >
-                    <div
-                        className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-6 shadow-xl"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <h3 className="text-lg font-semibold text-slate-900">Add category</h3>
-                        <p className="mt-0.5 text-sm text-slate-500">Create a category and optionally set a budget.</p>
-                        <form onSubmit={handleAddCategoryWithBudget} className="mt-4 space-y-4">
-                            <label className="block">
-                                <span className="mb-1 block text-xs font-medium text-slate-500">Category name</span>
-                                <input
-                                    type="text"
-                                    value={addModal.name}
-                                    onChange={(e) => setAddModal((prev) => ({ ...prev, name: e.target.value }))}
-                                    placeholder="e.g. Groceries, Transport, Fitness"
-                                    maxLength={100}
-                                    autoFocus
-                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-[#4863D4] focus:outline-none focus:ring-2 focus:ring-[#4863D4]/20"
-                                />
-                            </label>
-                            <label className="block">
-                                <span className="mb-1 block text-xs font-medium text-slate-500">Budget amount (optional)</span>
-                                <input
-                                    type="text"
-                                    inputMode="decimal"
-                                    value={addModal.amount}
-                                    onChange={(e) => setAddModal((prev) => ({ ...prev, amount: e.target.value }))}
-                                    placeholder="0.00"
-                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-[#4863D4] focus:outline-none focus:ring-2 focus:ring-[#4863D4]/20"
-                                />
-                            </label>
-                            <div className="grid grid-cols-2 gap-3">
-                                <label className="block">
-                                    <span className="mb-1 block text-xs font-medium text-slate-500">Month</span>
-                                    <select
-                                        value={addModal.month}
-                                        onChange={(e) => setAddModal((prev) => ({ ...prev, month: Number(e.target.value) }))}
-                                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-[#4863D4] focus:outline-none focus:ring-2 focus:ring-[#4863D4]/20"
-                                    >
-                                        {MONTH_NAMES.map((name, i) => (
-                                            <option key={name} value={i + 1}>{name}</option>
-                                        ))}
-                                    </select>
-                                </label>
-                                <label className="block">
-                                    <span className="mb-1 block text-xs font-medium text-slate-500">Year</span>
-                                    <select
-                                        value={addModal.year}
-                                        onChange={(e) => setAddModal((prev) => ({ ...prev, year: Number(e.target.value) }))}
-                                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-[#4863D4] focus:outline-none focus:ring-2 focus:ring-[#4863D4]/20"
-                                    >
-                                        {[currentYear - 1, currentYear, currentYear + 1].map((y) => (
-                                            <option key={y} value={y}>{y}</option>
-                                        ))}
-                                    </select>
-                                </label>
-                            </div>
-                            {addModal.error && (
-                                <p className="text-sm text-red-600">{addModal.error}</p>
-                            )}
-                            <div className="flex gap-2 pt-2">
-                                <button
-                                    type="button"
-                                    onClick={closeAddModal}
-                                    className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={addModal.saving || !addModal.name.trim()}
-                                    className="rounded-lg bg-[#4863D4] px-4 py-2 text-sm font-medium text-white hover:bg-[#3a50b8] disabled:opacity-50"
-                                >
-                                    {addModal.saving ? "Adding…" : "Add category"}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+                <AddCategoryModal
+                    currentMonth={currentMonth}
+                    currentYear={currentYear}
+                    onAdd={handleAddCategoryWithBudget}
+                    onClose={closeAddModal}
+                />
             )}
 
             {/* Delete confirmation modal; confirm runs handleDelete(deleteId), cancel sets deleteId to null */}
@@ -484,106 +271,5 @@ export default function Categories() {
                 />
             )}
         </div>
-    );
-}
-
-// --- CategoryRow: types and presentational row for one category card ---
-// Receives category + optional budget info (from budgetByCategory); used only inside this file in the categories grid
-interface BudgetInfo {
-    limit: number;
-    spent: number;
-}
-
-interface CategoryRowProps {
-    cat: Category;
-    budgetInfo?: BudgetInfo;
-    month: number;
-    year: number;
-    onDeleteClick: () => void;
-    onAddBudgetClick: () => void;
-}
-
-// Renders one category card: name, month/year label, spent vs limit progress (or "no budget" copy), delete and add/edit budget buttons. Uses formatAmount and MONTH_NAMES.
-function CategoryRow({
-    cat,
-    budgetInfo,
-    month,
-    year,
-    onDeleteClick,
-    onAddBudgetClick,
-}: CategoryRowProps) {
-    // Derived for progress display: whether category has a budget, amount left, over-budget flag, and percentage for bar width
-    const hasBudget = budgetInfo && budgetInfo.limit > 0;
-    const left = hasBudget ? budgetInfo!.limit - budgetInfo!.spent : 0;
-    const overBudget = hasBudget && budgetInfo!.spent > budgetInfo!.limit;
-    const pct = hasBudget && budgetInfo!.limit > 0
-        ? Math.min(100, (budgetInfo!.spent / budgetInfo!.limit) * 100)
-        : 0;
-
-    return (
-        <article className="flex flex-col rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
-            <div className="flex items-start justify-between gap-2">
-                <div className="flex min-w-0 items-center gap-2">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e8ecfc] text-[#4863D4]">
-                        <CategoryIcon />
-                    </span>
-                    <div>
-                        <h3 className="truncate font-semibold text-slate-900">{cat.name}</h3>
-                        <p className="text-xs text-slate-500">
-                            {MONTH_NAMES[month - 1]} {year}
-                        </p>
-                    </div>
-                </div>
-                <div className="flex shrink-0">
-                    <button
-                        type="button"
-                        onClick={onDeleteClick}
-                        className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600"
-                        aria-label="Delete category"
-                    >
-                        <DeleteIcon />
-                    </button>
-                </div>
-            </div>
-
-            {hasBudget ? (
-                <div className="mt-4 space-y-3">
-                    <div className="flex items-baseline justify-between gap-2 text-sm">
-                        <span className="text-slate-600">
-                            <span className="font-medium tabular-nums text-slate-900">{formatAmount(budgetInfo!.spent)}</span>
-                            {" / "}
-                            <span className="tabular-nums text-slate-700">{formatAmount(budgetInfo!.limit)}</span>
-                        </span>
-                        {left >= 0 ? (
-                            <span className="font-medium tabular-nums text-[#4863D4]">{formatAmount(left)} left</span>
-                        ) : (
-                            <span className="font-medium tabular-nums text-red-600">{formatAmount(-left)} over</span>
-                        )}
-                    </div>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
-                        <div
-                            className={`h-full rounded-full transition-all ${overBudget ? "bg-red-500" : "bg-[#4863D4]"}`}
-                            style={{ width: `${Math.min(100, pct)}%` }}
-                        />
-                    </div>
-                </div>
-            ) : budgetInfo && budgetInfo.spent > 0 ? (
-                <p className="mt-3 text-sm text-slate-500">
-                    Spent <span className="tabular-nums font-medium text-slate-700">{formatAmount(budgetInfo.spent)}</span> this month · no budget set
-                </p>
-            ) : (
-                <p className="mt-3 text-sm text-slate-400">No budget or spending yet</p>
-            )}
-
-            <div className="mt-4 pt-3 border-t border-slate-100">
-                <button
-                    type="button"
-                    onClick={onAddBudgetClick}
-                    className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 hover:border-[#4863D4] hover:text-[#4863D4] focus:outline-none focus:ring-2 focus:ring-[#4863D4] focus:ring-offset-2"
-                >
-                    {hasBudget ? "Edit budget" : "Add budget"}
-                </button>
-            </div>
-        </article>
     );
 }
