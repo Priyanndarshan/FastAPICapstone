@@ -1,8 +1,10 @@
+// Page deps: AuthContext, routing, config, shared components + icons, data hooks, formatters
 import { useState, useMemo } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { Link } from "react-router-dom";
 import { ROUTES, MONTH_NAMES } from "../config/constants";
 import { PageHeader, SpendingTrendChart, CategorySpendingPieChart } from "../components/shared";
+import { CloseIcon } from "../components/ui/icons";
 import { useAnalytics } from "../hooks/useAnalytics";
 import { useExpenses } from "../hooks/useExpenses";
 import { useCategories } from "../hooks/useCategories";
@@ -10,12 +12,15 @@ import { useBudgets } from "../hooks/useBudgets";
 import { formatAmount } from "../utils/formatters";
 
 export default function Dashboard() {
+    // Current user and local UI state: whether the over-budget warning banner has been dismissed
     const { user } = useAuth();
     const [budgetWarningDismissed, setBudgetWarningDismissed] = useState(false);
+    // Current month/year for analytics and labels; pie chart has its own month/year state
     const now = new Date();
     const currentMonth = now.getMonth() + 1;
     const currentYear = now.getFullYear();
 
+    // Analytics (6 months trend + monthly breakdown), expenses list, categories, budgets; second useAnalytics for pie chart month/year
     const { monthly, trend, loading: analyticsLoading, error: analyticsError, refetch: refetchAnalytics } = useAnalytics(currentMonth, currentYear, 6);
     const [pieChartMonth, setPieChartMonth] = useState(currentMonth);
     const [pieChartYear, setPieChartYear] = useState(currentYear);
@@ -24,10 +29,12 @@ export default function Dashboard() {
     const { categories } = useCategories();
     const { budgets } = useBudgets();
 
+    // First 5 expenses for "Recent expenses" list; helper to resolve category id to name
     const recentExpenses = expenses.slice(0, 5);
     const getCategoryName = (id: number | null) =>
         id ? categories.find((c) => c.id === id)?.name ?? "—" : "—";
 
+    // Map categoryId → { limit, spent } for current month; merges budgets with monthly analytics spending
     const budgetByCategory = useMemo(() => {
         const map: Record<number, { limit: number; spent: number }> = {};
         const thisMonthBudgets = budgets.filter(
@@ -49,6 +56,7 @@ export default function Dashboard() {
         return map;
     }, [budgets, monthly, currentMonth, currentYear]);
 
+    // List of categories where spent > limit this month; used for the red warning banner
     const overBudgetCategories = useMemo(() => {
         const list: { categoryId: number; name: string; limit: number; spent: number; overAmount: number }[] = [];
         for (const [categoryId, data] of Object.entries(budgetByCategory)) {
@@ -67,14 +75,17 @@ export default function Dashboard() {
         return list;
     }, [budgetByCategory, categories]);
 
+    // Header description and badge: "X transactions this month", "Y categories"
     const periodLabel = `${MONTH_NAMES[currentMonth - 1]} ${currentYear}`;
     const thisMonthCount = expenses.filter((e) => {
         const [y, m] = e.date.split("-").map(Number);
         return y === currentYear && m === currentMonth;
     }).length;
 
+    // Layout: header with welcome + badges, over-budget warning (dismissible), analytics error, then two-column grid + trend chart
     return (
         <div className="space-y-8">
+            {/* Title, period label, transaction count and category count badges */}
             <PageHeader
                 title={user ? `Welcome, ${user.name?.trim() || user.email || "User"}` : "Dashboard"}
                 description={periodLabel}
@@ -90,6 +101,7 @@ export default function Dashboard() {
                 }
             />
 
+            {/* Dismissible banner when any category is over budget; link to Categories to adjust */}
             {overBudgetCategories.length > 0 && !budgetWarningDismissed && (
                 <div className="flex items-center gap-4 rounded-xl border border-red-200 bg-red-50 px-5 py-3">
                     <p className="flex-1 min-w-0 text-sm font-medium text-red-800">
@@ -104,13 +116,12 @@ export default function Dashboard() {
                         className="shrink-0 rounded p-1.5 text-red-600 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-400"
                         aria-label="Dismiss warning"
                     >
-                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                        <CloseIcon className="h-5 w-5" />
                     </button>
                 </div>
             )}
 
+            {/* Shown when useAnalytics returns an error; "Try again" calls refetchAnalytics */}
             {analyticsError && (
                 <div className="rounded-xl border border-red-200 bg-red-50 px-5 py-4">
                     <p className="text-sm text-red-700">{analyticsError}</p>
@@ -124,7 +135,9 @@ export default function Dashboard() {
                 </div>
             )}
 
+            {/* Two columns: recent expenses card (left) and category pie chart (right) */}
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+                {/* Recent expenses: loading skeleton, empty state with link to Expenses, or list of up to 5 items */}
                 <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                     <div className="border-b border-slate-200 px-5 py-4">
                         <div className="flex items-center justify-between">
@@ -176,6 +189,7 @@ export default function Dashboard() {
                     </div>
                 </section>
 
+                {/* Pie chart for selected month/year; month/year controlled by dropdown in component */}
                 <CategorySpendingPieChart
                     monthly={pieChartMonthly}
                     loading={pieChartLoading}
@@ -185,6 +199,7 @@ export default function Dashboard() {
                 />
             </div>
 
+            {/* Line chart: 6-month spending trend from useAnalytics trend data */}
             <SpendingTrendChart trend={trend} loading={analyticsLoading} />
         </div>
     );

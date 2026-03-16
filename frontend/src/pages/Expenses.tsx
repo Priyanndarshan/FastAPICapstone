@@ -1,8 +1,23 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+// Page deps: shared components, DatePicker, icons, useExpenses/useExpenseFilters/useCategories/usePaginatedExpenses, types, export utils, formatters, config, styles
+import { useState, useRef, useCallback } from "react";
 import { CashFlowSummaryCard, ConfirmModal, ExpenseFormModal, PageHeader } from "../components/shared";
 import { DatePicker } from "../components/ui/DatePicker";
+import {
+    ChevronDownIcon,
+    ChevronLeftIcon,
+    ChevronRightIcon,
+    CloseIcon,
+    DeleteIcon,
+    DownloadIcon,
+    EditIcon,
+    MinusIcon,
+    PlusIcon,
+    SearchIcon,
+    SortIcon,
+} from "../components/ui/icons";
 import { useExpenses } from "../hooks/useExpenses";
 import { useExpenseFilters } from "../hooks/useExpenseFilters";
+import { usePaginatedExpenses, type SortOption } from "../hooks/usePaginatedExpenses";
 import { useCategories } from "../hooks/useCategories";
 import type { Expense } from "../types";
 import type { ExpensePayload, ExpenseFilters } from "../api/expenses";
@@ -11,6 +26,7 @@ import { formatDateLabel } from "../utils/formatters";
 import { PAYMENT_MODES } from "../config/constants";
 import { input, btnPrimary, btnSecondary } from "../styles/ui";
 
+// Default form values for add/edit; date is today in YYYY-MM-DD
 const defaultPayload: ExpensePayload = {
     amount: "",
     date: new Date().toISOString().slice(0, 10),
@@ -21,6 +37,7 @@ const defaultPayload: ExpensePayload = {
     transaction_type: "out",
 };
 
+// Converts an Expense from API into form payload for editing
 function payloadFromExpense(e: Expense): ExpensePayload {
     return {
         amount: e.amount,
@@ -34,17 +51,16 @@ function payloadFromExpense(e: Expense): ExpensePayload {
     };
 }
 
-const PAGE_SIZE = 10;
-
 export default function Expenses() {
+    // Data: categories for dropdowns; expenses list + CRUD + loading/error from useExpenses; pagination and sort; export menu open state + ref
     const { categories } = useCategories();
     const { expenses, loading, error, refetch, addExpense, updateExpense, removeExpense } = useExpenses();
     const [page, setPage] = useState(1);
-    type SortOption = "date" | "amount_desc" | "amount_asc";
     const [sortBy, setSortBy] = useState<SortOption>("date");
     const [exportMenuOpen, setExportMenuOpen] = useState(false);
     const exportMenuRef = useRef<HTMLDivElement>(null);
 
+    // When filters change, reset to page 1 and refetch expenses with new filters
     const onFilterChange = useCallback(
         (filters: ExpenseFilters) => {
             setPage(1);
@@ -52,61 +68,32 @@ export default function Expenses() {
         },
         [refetch]
     );
-    const filters = useExpenseFilters(onFilterChange);
+    const filters = useExpenseFilters(onFilterChange, { exportMenuRef, setExportMenuOpen });
 
-    const [typeFilterOpen, setTypeFilterOpen] = useState(false);
-    const typeFilterRef = useRef<HTMLDivElement>(null);
-    const [durationDropdownOpen, setDurationDropdownOpen] = useState(false);
-    const durationDropdownRef = useRef<HTMLDivElement>(null);
-    const [categoryFilterOpen, setCategoryFilterOpen] = useState(false);
-    const categoryFilterRef = useRef<HTMLDivElement>(null);
-    const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
-    const sortDropdownRef = useRef<HTMLDivElement>(null);
-    const [recurringFilterOpen, setRecurringFilterOpen] = useState(false);
-    const recurringFilterRef = useRef<HTMLDivElement>(null);
+    // Pagination: recurring filter + sort + slice for current page (from usePaginatedExpenses)
+    const paginated = usePaginatedExpenses(expenses, filters.filterRecurring, sortBy, page);
 
-    useEffect(() => {
-        function handleClickOutside(e: MouseEvent) {
-            const target = e.target as Node;
-            if (filters.paymentModesRef.current && !filters.paymentModesRef.current.contains(target)) {
-                filters.setPaymentModesOpen(false);
-            }
-            if (typeFilterRef.current && !typeFilterRef.current.contains(target)) {
-                setTypeFilterOpen(false);
-            }
-            if (durationDropdownRef.current && !durationDropdownRef.current.contains(target)) {
-                setDurationDropdownOpen(false);
-            }
-            if (categoryFilterRef.current && !categoryFilterRef.current.contains(target)) {
-                setCategoryFilterOpen(false);
-            }
-            if (recurringFilterRef.current && !recurringFilterRef.current.contains(target)) {
-                setRecurringFilterOpen(false);
-            }
-            if (sortDropdownRef.current && !sortDropdownRef.current.contains(target)) {
-                setSortDropdownOpen(false);
-            }
-            if (exportMenuRef.current && !exportMenuRef.current.contains(target)) {
-                setExportMenuOpen(false);
-            }
-        }
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [filters.setPaymentModesOpen]);
+    // Summary totals from current filtered expenses
+    const cashIn = expenses.filter((e) => e.transaction_type === "in").reduce((s, e) => s + Number(e.amount), 0);
+    const cashOut = expenses.filter((e) => e.transaction_type === "out").reduce((s, e) => s + Number(e.amount), 0);
 
+    // Add-expense modal: "in" | "out" | false; form state, adding flag, validation error
     const [showAddForm, setShowAddForm] = useState<"in" | "out" | false>(false);
     const [form, setForm] = useState<ExpensePayload>(defaultPayload);
     const [adding, setAdding] = useState(false);
     const [addError, setAddError] = useState("");
 
+    // Edit inline: which expense id is being edited, form state, error, saving flag
     const [editId, setEditId] = useState<number | null>(null);
     const [editForm, setEditForm] = useState<ExpensePayload>(defaultPayload);
     const [editError, setEditError] = useState("");
     const [saving, setSaving] = useState(false);
 
+    // Delete confirmation: which expense id; deleting = request in progress
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [deleting, setDeleting] = useState(false);
 
+    // Submit add form: validate amount, call addExpense, reset form and close modal on success
     async function handleAdd(e: React.FormEvent) {
         e.preventDefault();
         const amount = form.amount.trim();
@@ -135,18 +122,21 @@ export default function Expenses() {
         }
     }
 
+    // Open inline edit for an expense; fill form from payloadFromExpense(exp)
     function startEdit(exp: Expense) {
         setEditId(exp.id);
         setEditForm(payloadFromExpense(exp));
         setEditError("");
     }
 
+    // Close edit row and reset edit form
     function cancelEdit() {
         setEditId(null);
         setEditForm(defaultPayload);
         setEditError("");
     }
 
+    // Submit edit form: validate amount, call updateExpense, then cancelEdit on success
     async function handleSaveEdit(id: number) {
         const amount = editForm.amount.trim();
         if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
@@ -173,6 +163,7 @@ export default function Expenses() {
         }
     }
 
+    // Confirm delete: call removeExpense, then clear deleteId to close ConfirmModal
     async function handleDelete(id: number) {
         setDeleting(true);
         try {
@@ -183,8 +174,10 @@ export default function Expenses() {
         }
     }
 
+    // Layout: header with Export dropdown, add modal, summary card, filters + table (or loading/error/empty), delete modal
     return (
         <div className="space-y-6">
+            {/* Title and Export dropdown (CSV, Excel, PDF) */}
             <PageHeader
                 title="Expenses"
                 actions={
@@ -197,12 +190,8 @@ export default function Expenses() {
                             aria-haspopup="true"
                         >
                             Export
-                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                            </svg>
-                            <svg className={`h-4 w-4 transition-transform ${exportMenuOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
+                            <DownloadIcon />
+                            <ChevronDownIcon className={`h-4 w-4 transition-transform ${exportMenuOpen ? "rotate-180" : ""}`} />
                         </button>
                         {exportMenuOpen && (
                             <div className="absolute right-0 top-full z-10 mt-1 min-w-[180px] rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
@@ -245,6 +234,7 @@ export default function Expenses() {
                 }
             />
 
+            {/* Add Cash In / Cash Out modal; form state and submit go through handleAdd */}
             {showAddForm && (
                 <ExpenseFormModal
                     title={showAddForm === "in" ? "Cash In" : "Cash Out"}
@@ -263,34 +253,27 @@ export default function Expenses() {
                 />
             )}
 
-            {(() => {
-                const cashIn = expenses.filter((e) => e.transaction_type === "in").reduce((s, e) => s + Number(e.amount), 0);
-                const cashOut = expenses.filter((e) => e.transaction_type === "out").reduce((s, e) => s + Number(e.amount), 0);
-                return (
-                    <CashFlowSummaryCard cashIn={cashIn} cashOut={cashOut} loading={loading} />
-                );
-            })()}
+            {/* Summary: sum of cash in / cash out from current filtered expenses */}
+            <CashFlowSummaryCard cashIn={cashIn} cashOut={cashOut} loading={loading} />
 
             <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                 <div className="space-y-3 border-b border-slate-200 p-4">
                     <div className="flex flex-wrap items-center gap-2">
-                    <div className="relative" ref={durationDropdownRef}>
+                    <div className="relative" ref={filters.durationDropdownRef}>
                         <button
                             type="button"
-                            onClick={() => setDurationDropdownOpen((o) => !o)}
+                            onClick={() => filters.setDurationDropdownOpen((o) => !o)}
                             className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#4863D4]/20 ${filters.duration !== "all_time"
                                 ? "border-[#4863D4] bg-[#e8ecfc] text-[#3a50b8]"
                                 : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
                             }`}
                             aria-label="Duration"
-                            aria-expanded={durationDropdownOpen}
+                            aria-expanded={filters.durationDropdownOpen}
                         >
                             {filters.duration === "all_time" ? "Duration: All Time" : filters.duration === "today" ? "Today" : filters.duration === "this_week" ? "This Week" : filters.duration === "this_month" ? "This Month" : "Custom"}
-                            <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
+                            <ChevronDownIcon className="h-4 w-4 shrink-0" />
                         </button>
-                        {durationDropdownOpen && (
+                        {filters.durationDropdownOpen && (
                             <div className="absolute left-0 top-full z-20 mt-1.5 min-w-[200px] rounded-xl border border-slate-200 bg-white py-2 shadow-lg">
                                 <div className="px-2 pb-1">
                                     {([
@@ -312,7 +295,7 @@ export default function Expenses() {
                                                 type="radio"
                                                 name="filterDuration"
                                                 checked={filters.duration === value}
-                                                onChange={() => { filters.setDuration(value); setDurationDropdownOpen(false); }}
+                                                onChange={() => { filters.setDuration(value); filters.setDurationDropdownOpen(false); }}
                                                 className="h-4 w-4 border-slate-300 text-[#4863D4] focus:ring-[#4863D4]"
                                             />
                                             {label}
@@ -322,14 +305,14 @@ export default function Expenses() {
                                 <div className="flex items-center justify-between border-t border-slate-100 px-3 pt-2 mt-1">
                                     <button
                                         type="button"
-                                        onClick={() => { filters.setDuration("all_time"); setDurationDropdownOpen(false); }}
+                                        onClick={() => { filters.setDuration("all_time"); filters.setDurationDropdownOpen(false); }}
                                         className="text-sm font-medium text-slate-600 hover:text-slate-900"
                                     >
                                         Clear
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => setDurationDropdownOpen(false)}
+                                        onClick={() => filters.setDurationDropdownOpen(false)}
                                         className="text-sm font-medium text-[#4863D4] hover:text-[#3a50b8]"
                                     >
                                         Done
@@ -356,23 +339,22 @@ export default function Expenses() {
                             />
                         </>
                     )}
-                    <div className="relative" ref={typeFilterRef}>
+                    {/* Transaction type: All / Cash In / Cash Out */}
+                    <div className="relative" ref={filters.typeFilterRef}>
                         <button
                             type="button"
-                            onClick={() => setTypeFilterOpen((o) => !o)}
+                            onClick={() => filters.setTypeFilterOpen((o) => !o)}
                             className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#4863D4]/20 ${filters.filterType
                                 ? "border-[#4863D4] bg-[#e8ecfc] text-[#3a50b8]"
                                 : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
                             }`}
                             aria-label="Transaction type"
-                            aria-expanded={typeFilterOpen}
+                            aria-expanded={filters.typeFilterOpen}
                         >
                             {filters.filterType === "in" ? "Cash In" : filters.filterType === "out" ? "Cash Out" : "Types: All"}
-                            <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
+                            <ChevronDownIcon className="h-4 w-4 shrink-0" />
                         </button>
-                        {typeFilterOpen && (
+                        {filters.typeFilterOpen && (
                             <div className="absolute left-0 top-full z-20 mt-1.5 min-w-[200px] rounded-xl border border-slate-200 bg-white py-2 shadow-lg">
                                 <div className="px-2 pb-1">
                                     {[
@@ -402,14 +384,14 @@ export default function Expenses() {
                                 <div className="flex items-center justify-between border-t border-slate-100 px-3 pt-2 mt-1">
                                     <button
                                         type="button"
-                                        onClick={() => { filters.setFilterType(""); setTypeFilterOpen(false); }}
+                                        onClick={() => { filters.setFilterType(""); filters.setTypeFilterOpen(false); }}
                                         className="text-sm font-medium text-slate-600 hover:text-slate-900"
                                     >
                                         Clear
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => setTypeFilterOpen(false)}
+                                        onClick={() => filters.setTypeFilterOpen(false)}
                                         className="text-sm font-medium text-[#4863D4] hover:text-[#3a50b8]"
                                     >
                                         Done
@@ -418,6 +400,7 @@ export default function Expenses() {
                             </div>
                         )}
                     </div>
+                    {/* Payment modes: multi-select checkboxes from PAYMENT_MODES */}
                     <div className="relative" ref={filters.paymentModesRef}>
                         <button
                             type="button"
@@ -430,9 +413,7 @@ export default function Expenses() {
                             aria-expanded={filters.paymentModesOpen}
                         >
                             Payment Modes{filters.paymentModeSelected.length > 0 ? ` (${filters.paymentModeSelected.length})` : ""}
-                            <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
+                            <ChevronDownIcon className="h-4 w-4 shrink-0" />
                         </button>
                         {filters.paymentModesOpen && (
                             <div className="absolute left-0 top-full z-20 mt-1.5 min-w-[200px] rounded-xl border border-slate-200 bg-white py-2 shadow-lg">
@@ -487,25 +468,23 @@ export default function Expenses() {
                             </div>
                         )}
                     </div>
-                    <div className="relative" ref={categoryFilterRef}>
+                    <div className="relative" ref={filters.categoryFilterRef}>
                         <button
                             type="button"
-                            onClick={() => setCategoryFilterOpen((o) => !o)}
+                            onClick={() => filters.setCategoryFilterOpen((o) => !o)}
                             className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#4863D4]/20 ${filters.filterCategoryId
                                 ? "border-[#4863D4] bg-[#e8ecfc] text-[#3a50b8]"
                                 : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
                             }`}
                             aria-label="Category"
-                            aria-expanded={categoryFilterOpen}
+                            aria-expanded={filters.categoryFilterOpen}
                         >
                             {filters.filterCategoryId
                                 ? categories.find((c) => String(c.id) === filters.filterCategoryId)?.name ?? "Category"
                                 : "Categories: All"}
-                            <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
+                            <ChevronDownIcon className="h-4 w-4 shrink-0" />
                         </button>
-                        {categoryFilterOpen && (
+                        {filters.categoryFilterOpen && (
                             <div className="absolute left-0 top-full z-20 mt-1.5 flex min-w-[200px] max-h-64 flex-col rounded-xl border border-slate-200 bg-white shadow-lg">
                                 <div className="overflow-y-auto px-2 py-2">
                                     <label
@@ -547,14 +526,14 @@ export default function Expenses() {
                                 <div className="flex items-center justify-between border-t border-slate-100 px-3 py-2 shrink-0">
                                     <button
                                         type="button"
-                                        onClick={() => { filters.setFilterCategoryId(""); setCategoryFilterOpen(false); }}
+                                        onClick={() => { filters.setFilterCategoryId(""); filters.setCategoryFilterOpen(false); }}
                                         className="text-sm font-medium text-slate-600 hover:text-slate-900"
                                     >
                                         Clear
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => setCategoryFilterOpen(false)}
+                                        onClick={() => filters.setCategoryFilterOpen(false)}
                                         className="text-sm font-medium text-[#4863D4] hover:text-[#3a50b8]"
                                     >
                                         Done
@@ -563,23 +542,22 @@ export default function Expenses() {
                             </div>
                         )}
                     </div>
-                    <div className="relative" ref={recurringFilterRef}>
+                    {/* Recurring filter: All / Recurring only / Non-recurring only */}
+                    <div className="relative" ref={filters.recurringFilterRef}>
                         <button
                             type="button"
-                            onClick={() => setRecurringFilterOpen((o) => !o)}
+                            onClick={() => filters.setRecurringFilterOpen((o) => !o)}
                             className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#4863D4]/20 ${filters.filterRecurring
                                 ? "border-[#4863D4] bg-[#e8ecfc] text-[#3a50b8]"
                                 : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
                             }`}
                             aria-label="Recurring filter"
-                            aria-expanded={recurringFilterOpen}
+                            aria-expanded={filters.recurringFilterOpen}
                         >
                             {filters.filterRecurring === "true" ? "Recurring" : filters.filterRecurring === "false" ? "Non-recurring" : "Recurring: All"}
-                            <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
+                            <ChevronDownIcon className="h-4 w-4 shrink-0" />
                         </button>
-                        {recurringFilterOpen && (
+                        {filters.recurringFilterOpen && (
                             <div className="absolute left-0 top-full z-20 mt-1.5 min-w-[200px] rounded-xl border border-slate-200 bg-white py-2 shadow-lg">
                                 <div className="px-2 pb-1">
                                     {[
@@ -599,7 +577,7 @@ export default function Expenses() {
                                                 type="radio"
                                                 name="filterRecurring"
                                                 checked={filters.filterRecurring === value}
-                                                onChange={() => { filters.setFilterRecurring(value); setRecurringFilterOpen(false); }}
+                                                onChange={() => { filters.setFilterRecurring(value); filters.setRecurringFilterOpen(false); }}
                                                 className="h-4 w-4 border-slate-300 text-[#4863D4] focus:ring-[#4863D4]"
                                             />
                                             {label}
@@ -609,14 +587,14 @@ export default function Expenses() {
                                 <div className="flex items-center justify-between border-t border-slate-100 px-3 pt-2 mt-1">
                                     <button
                                         type="button"
-                                        onClick={() => { filters.setFilterRecurring(""); setRecurringFilterOpen(false); }}
+                                        onClick={() => { filters.setFilterRecurring(""); filters.setRecurringFilterOpen(false); }}
                                         className="text-sm font-medium text-slate-600 hover:text-slate-900"
                                     >
                                         Clear
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => setRecurringFilterOpen(false)}
+                                        onClick={() => filters.setRecurringFilterOpen(false)}
                                         className="text-sm font-medium text-[#4863D4] hover:text-[#3a50b8]"
                                     >
                                         Done
@@ -625,25 +603,23 @@ export default function Expenses() {
                             </div>
                         )}
                     </div>
+                    {/* Clear all filters when any filter is active */}
                     {filters.hasActiveFilters && (
                         <button
                             type="button"
                             onClick={filters.clearFilters}
                             className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#4863D4]/20"
                         >
-                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
+                            <CloseIcon />
                             Clear All
                         </button>
                     )}
                     </div>
+                    {/* Search input (debounced in useExpenseFilters) + Sort dropdown + Cash In / Cash Out buttons */}
                     <div className="flex flex-wrap items-stretch gap-3">
                     <div className="relative flex min-h-10 min-w-[200px] max-w-md flex-1 items-center">
                         <span className="pointer-events-none absolute left-3 text-slate-400">
-                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
+                            <SearchIcon />
                         </span>
                         <input
                             type="text"
@@ -657,26 +633,22 @@ export default function Expenses() {
                             /
                         </span>
                     </div>
-                    <div className="relative shrink-0" ref={sortDropdownRef}>
+                    <div className="relative shrink-0" ref={filters.sortDropdownRef}>
                         <button
                             type="button"
-                            onClick={() => setSortDropdownOpen((o) => !o)}
+                            onClick={() => filters.setSortDropdownOpen((o) => !o)}
                             className={`inline-flex h-10 items-center gap-1.5 rounded-lg border px-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#4863D4]/20 ${sortBy !== "date"
                                 ? "border-[#4863D4] bg-[#e8ecfc] text-[#3a50b8]"
                                 : "border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
                             }`}
                             aria-label="Sort by"
-                            aria-expanded={sortDropdownOpen}
+                            aria-expanded={filters.sortDropdownOpen}
                         >
-                            <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
-                            </svg>
+                            <SortIcon className="h-4 w-4 shrink-0" aria-hidden />
                             <span className="hidden sm:inline">Sort</span>
-                            <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                            </svg>
+                            <ChevronDownIcon className="h-4 w-4 shrink-0" />
                         </button>
-                        {sortDropdownOpen && (
+                        {filters.sortDropdownOpen && (
                             <div className="absolute left-0 top-full z-20 mt-1.5 min-w-[200px] rounded-xl border border-slate-200 bg-white py-2 shadow-lg">
                                 <div className="px-2 pb-1">
                                     {[
@@ -696,7 +668,7 @@ export default function Expenses() {
                                                 type="radio"
                                                 name="sortBy"
                                                 checked={sortBy === value}
-                                                onChange={() => { setSortBy(value); setPage(1); setSortDropdownOpen(false); }}
+                                                onChange={() => { setSortBy(value); setPage(1); filters.setSortDropdownOpen(false); }}
                                                 className="h-4 w-4 border-slate-300 text-[#4863D4] focus:ring-[#4863D4]"
                                             />
                                             {label}
@@ -706,14 +678,14 @@ export default function Expenses() {
                                 <div className="flex items-center justify-between border-t border-slate-100 px-3 pt-2 mt-1">
                                     <button
                                         type="button"
-                                        onClick={() => { setSortBy("date"); setPage(1); setSortDropdownOpen(false); }}
+                                        onClick={() => { setSortBy("date"); setPage(1); filters.setSortDropdownOpen(false); }}
                                         className="text-sm font-medium text-slate-600 hover:text-slate-900"
                                     >
                                         Clear
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => setSortDropdownOpen(false)}
+                                        onClick={() => filters.setSortDropdownOpen(false)}
                                         className="text-sm font-medium text-[#4863D4] hover:text-[#3a50b8]"
                                     >
                                         Done
@@ -732,9 +704,7 @@ export default function Expenses() {
                             }}
                             className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#4863D4] px-4 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#3a50b8] focus:outline-none focus:ring-2 focus:ring-[#4863D4] focus:ring-offset-2"
                         >
-                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                            </svg>
+                            <PlusIcon className="h-5 w-5" aria-hidden />
                             Cash In
                         </button>
                         <button
@@ -746,21 +716,21 @@ export default function Expenses() {
                             }}
                             className="inline-flex h-10 items-center gap-2 rounded-lg bg-red-600 px-4 text-sm font-medium text-white shadow-sm transition-colors hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                         >
-                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                            </svg>
+                            <MinusIcon className="h-5 w-5" aria-hidden />
                             Cash Out
                         </button>
                     </div>
                     </div>
                 </div>
 
+                {/* Loading state while useExpenses is fetching */}
                 {loading && (
                     <div className="py-12 text-center text-slate-500">
                         Loading…
                     </div>
                 )}
 
+                {/* Error state; "Try again" triggers refetch with current filters */}
                 {!loading && error && (
                     <div className="border-t border-slate-200 bg-red-50/50 p-6 text-center">
                         <p className="text-red-700">{error}</p>
@@ -770,6 +740,7 @@ export default function Expenses() {
                     </div>
                 )}
 
+                {/* Empty state when no expenses match filters */}
                 {!loading && !error && expenses.length === 0 && (
                     <div className="border-t border-slate-200 py-16 text-center">
                         <p className="text-slate-500">No expenses yet.</p>
@@ -777,69 +748,47 @@ export default function Expenses() {
                     </div>
                 )}
 
-                {!loading && !error && expenses.length > 0 && (() => {
-                    const filteredByRecurring = filters.filterRecurring === "true"
-                        ? expenses.filter((e) => e.is_recurring)
-                        : filters.filterRecurring === "false"
-                            ? expenses.filter((e) => !e.is_recurring)
-                            : expenses;
-                    if (filteredByRecurring.length === 0) {
-                        return (
-                            <div className="border-t border-slate-200 py-12 text-center">
-                                <p className="text-slate-500">No expenses match the recurring filter.</p>
-                                <p className="mt-1 text-sm text-slate-400">Try changing or clearing filters.</p>
-                            </div>
-                        );
-                    }
-                    const sorted = [...filteredByRecurring].sort((a, b) => {
-                        if (sortBy === "amount_desc") {
-                            const amtA = Number(a.amount);
-                            const amtB = Number(b.amount);
-                            return amtB - amtA;
-                        }
-                        if (sortBy === "amount_asc") {
-                            const amtA = Number(a.amount);
-                            const amtB = Number(b.amount);
-                            return amtA - amtB;
-                        }
-                        return b.date > a.date ? 1 : b.date < a.date ? -1 : b.id - a.id;
-                    });
-                    const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
-                    const currentPage = Math.min(page, totalPages);
-                    const start = (currentPage - 1) * PAGE_SIZE;
-                    const pageExpenses = sorted.slice(start, start + PAGE_SIZE);
-                    const startEntry = start + 1;
-                    const endEntry = start + pageExpenses.length;
-                    return (
-                        <>
+                {/* Recurring filter leaves no results */}
+                {!loading && !error && expenses.length > 0 && paginated.isEmpty && (
+                    <div className="border-t border-slate-200 py-12 text-center">
+                        <p className="text-slate-500">No expenses match the recurring filter.</p>
+                        <p className="mt-1 text-sm text-slate-400">Try changing or clearing filters.</p>
+                    </div>
+                )}
+
+                {/* Pagination + table when there are expenses after recurring filter */}
+                {!loading && !error && expenses.length > 0 && !paginated.isEmpty && (
+                    <>
+                        {/* Pagination: "Showing X – Y of Z" + prev/next buttons */}
                         <div className="flex flex-col gap-4 border-b border-slate-200 bg-slate-50/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                             <p className="text-sm text-slate-600">
-                                Showing <span className="font-medium">{startEntry}</span> – <span className="font-medium">{endEntry}</span> of <span className="font-medium">{filteredByRecurring.length}</span> entries
+                                Showing <span className="font-medium">{paginated.startEntry}</span> – <span className="font-medium">{paginated.endEntry}</span> of <span className="font-medium">{paginated.totalCount}</span> entries
                             </p>
                             <div className="flex items-center gap-2">
                                 <button
                                     type="button"
                                     onClick={() => setPage((p) => Math.max(1, p - 1))}
-                                    disabled={currentPage <= 1}
+                                    disabled={paginated.currentPage <= 1}
                                     className="rounded-lg border border-slate-300 bg-white p-2 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white"
                                     aria-label="Previous page"
                                 >
-                                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                                    <ChevronLeftIcon />
                                 </button>
                                 <span className="flex items-center gap-1 text-sm text-slate-700">
-                                    Page <span className="font-medium">{currentPage}</span> of <span className="font-medium">{totalPages}</span>
+                                    Page <span className="font-medium">{paginated.currentPage}</span> of <span className="font-medium">{paginated.totalPages}</span>
                                 </span>
                                 <button
                                     type="button"
-                                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                                    disabled={currentPage >= totalPages}
+                                    onClick={() => setPage((p) => Math.min(paginated.totalPages, p + 1))}
+                                    disabled={paginated.currentPage >= paginated.totalPages}
                                     className="rounded-lg border border-slate-300 bg-white p-2 text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white"
                                     aria-label="Next page"
                                 >
-                                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                                    <ChevronRightIcon />
                                 </button>
                             </div>
                         </div>
+                        {/* Table: each row is either ExpenseTableRow or inline ExpenseEditForm when editId matches */}
                         <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm">
                                 <thead>
@@ -853,7 +802,7 @@ export default function Expenses() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                    {pageExpenses.map((exp) => (
+                                    {paginated.pageExpenses.map((exp) => (
                                         editId === exp.id ? (
                                             <tr key={exp.id}>
                                                 <td colSpan={6} className="bg-[#e8ecfc]/50 p-0">
@@ -881,11 +830,11 @@ export default function Expenses() {
                                 </tbody>
                             </table>
                         </div>
-                        </>
-                    );
-                })()}
+                    </>
+                )}
             </div>
 
+            {/* Delete confirmation modal; confirm runs handleDelete(deleteId), cancel clears deleteId */}
             {deleteId !== null && (
                 <ConfirmModal
                     message="Delete this expense? This cannot be undone."
@@ -900,6 +849,7 @@ export default function Expenses() {
     );
 }
 
+// One table row: date, notes (+ recurring badge), category, payment mode, amount, edit/delete buttons
 function ExpenseTableRow({
     expense,
     categories,
@@ -911,6 +861,7 @@ function ExpenseTableRow({
     onEdit: () => void;
     onDelete: () => void;
 }) {
+    // Resolve category id to name for display
     const categoryName = expense.category_id
         ? categories.find((c) => c.id === expense.category_id)?.name ?? `#${expense.category_id}`
         : "—";
@@ -944,9 +895,7 @@ function ExpenseTableRow({
                         className="rounded p-1.5 text-slate-400 hover:bg-[#e8ecfc] hover:text-[#4863D4]"
                         aria-label="Edit"
                     >
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                        </svg>
+                        <EditIcon />
                     </button>
                     <button
                         type="button"
@@ -954,9 +903,7 @@ function ExpenseTableRow({
                         className="rounded p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
                         aria-label="Delete"
                     >
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
+                        <DeleteIcon />
                     </button>
                 </div>
             </td>
@@ -964,6 +911,7 @@ function ExpenseTableRow({
     );
 }
 
+// Inline edit form: amount, date, category, payment mode, type, notes, recurring; Save calls onSave, Cancel calls onCancel
 function ExpenseEditForm({
     form,
     setForm,

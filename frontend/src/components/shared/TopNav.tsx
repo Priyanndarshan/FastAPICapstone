@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/Popover";
+import { ChevronDownIcon, LogoutIcon } from "../ui/icons";
 import { ROUTES } from "../../config/constants";
 
 function Avatar({ name, size = "md" }: { name: string; size?: "sm" | "md" }) {
@@ -52,15 +53,7 @@ export default function TopNav() {
                 <span className="hidden max-w-[120px] truncate font-medium text-slate-900 sm:inline">
                   {user.name}
                 </span>
-                <svg
-                  className="h-4 w-4 shrink-0 text-slate-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+                <ChevronDownIcon className="h-4 w-4 shrink-0 text-slate-500" />
               </button>
             </PopoverTrigger>
             <PopoverContent className="w-72 p-0" align="end" sideOffset={8}>
@@ -94,9 +87,7 @@ export default function TopNav() {
                   }}
                   className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-[#4863D4] focus:ring-inset"
                 >
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                  </svg>
+                  <LogoutIcon />
                   Logout
                 </button>
               </div>

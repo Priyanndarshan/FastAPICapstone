@@ -1,6 +1,7 @@
 import type { ExpensePayload } from "../../api/expenses";
 import type { Category } from "../../types";
 import { DatePicker } from "../ui/DatePicker";
+import { CloseIcon } from "../ui/icons";
 import { PAYMENT_MODES } from "../../config/constants";
 import { input, btnPrimary, btnSecondary } from "../../styles/ui";
 
@@ -44,9 +45,7 @@ export default function ExpenseFormModal({
                         className="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
                         aria-label="Close"
                     >
-                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
+                        <CloseIcon className="h-5 w-5" />
                     </button>
                 </div>
                 <div className="min-h-0 flex-1 overflow-y-auto">

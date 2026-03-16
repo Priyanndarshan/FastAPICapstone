@@ -1,4 +1,5 @@
 import { formatAmount } from "../../utils/formatters";
+import { PlusIcon, MinusIcon, BalanceIcon } from "../ui/icons";
 
 interface CashFlowSummaryCardProps {
     cashIn: number;
@@ -27,9 +28,7 @@ export default function CashFlowSummaryCard({ cashIn, cashOut, loading }: CashFl
             <div className="rounded-xl bg-emerald-50/80 px-3 py-2.5 ring-1 ring-emerald-200/60">
                 <div className="flex items-center gap-1.5">
                     <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-emerald-500/15 text-emerald-600">
-                        <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                        </svg>
+                        <PlusIcon className="h-3.5 w-3.5" />
                     </span>
                     <span className="text-[10px] font-medium uppercase tracking-wider text-emerald-700/80">Cash In</span>
                 </div>
@@ -41,9 +40,7 @@ export default function CashFlowSummaryCard({ cashIn, cashOut, loading }: CashFl
             <div className="rounded-xl bg-red-50/80 px-3 py-2.5 ring-1 ring-red-200/60">
                 <div className="flex items-center gap-1.5">
                     <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-red-500/15 text-red-600">
-                        <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
-                        </svg>
+                        <MinusIcon className="h-3.5 w-3.5" />
                     </span>
                     <span className="text-[10px] font-medium uppercase tracking-wider text-red-700/80">Cash Out</span>
                 </div>
@@ -55,9 +52,7 @@ export default function CashFlowSummaryCard({ cashIn, cashOut, loading }: CashFl
             <div className="rounded-xl bg-slate-100/80 px-3 py-2.5 ring-1 ring-slate-200/60">
                 <div className="flex items-center gap-1.5">
                     <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-slate-300/50 text-slate-600">
-                        <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M3 14h18M5 6h14M5 18h14" />
-                        </svg>
+                        <BalanceIcon className="h-3.5 w-3.5" />
                     </span>
                     <span className="text-[10px] font-medium uppercase tracking-wider text-slate-600">
                         Net Balance

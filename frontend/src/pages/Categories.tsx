@@ -1,3 +1,5 @@
+// --- Page dependencies: React, data hooks, types, config, shared components ---
+// Connected to: hooks/useCategories, useBudgets, useAnalytics (API); types/index (Category); config/constants (MONTH_NAMES); components/shared (ConfirmModal, PageHeader)
 import { useState, useMemo } from "react";
 import { useCategories } from "../hooks/useCategories";
 import { useBudgets } from "../hooks/useBudgets";
@@ -6,17 +8,21 @@ import type { Category } from "../types";
 import { MONTH_NAMES } from "../config/constants";
 import { formatAmount } from "../utils/formatters";
 import { ConfirmModal, PageHeader } from "../components/shared";
+import { PlusIcon, CategoryIcon, DeleteIcon } from "../components/ui/icons";
 
+// Current month/year used for budget defaults and "this month" filtering; computed once at module load
 const now = new Date();
 const currentMonth = now.getMonth() + 1;
 const currentYear = now.getFullYear();
 
 export default function Categories() {
+    // Data layer: categories CRUD + loading/error (useCategories → API); budgets CRUD (useBudgets → API); monthly analytics (useAnalytics → API) for spent-per-category
     const { categories, loading, error, refetch, addCategory, updateCategory, removeCategory } =
         useCategories();
     const { budgets, addBudget, updateBudget } = useBudgets();
     const { monthly } = useAnalytics(currentMonth, currentYear, 1);
 
+    // Derives a map: categoryId → { limit, spent } for current month. Merges budgets (limit) with analytics (spent). Used by CategoryRow to show progress bars.
     const budgetByCategory = useMemo(() => {
         const map: Record<number, { limit: number; spent: number }> = {};
         const thisMonthBudgets = budgets.filter(
@@ -38,6 +44,7 @@ export default function Categories() {
         return map;
     }, [budgets, monthly]);
 
+    // "Add category" modal state: visibility, form fields (name, amount, month, year), validation error, and saving flag
     const [addModal, setAddModal] = useState({
         open: false,
         name: "",
@@ -48,9 +55,11 @@ export default function Categories() {
         saving: false,
     });
 
+    // Delete confirmation: which category id is selected for delete (null = modal closed); deleting = request in progress
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [deleting, setDeleting] = useState(false);
 
+    // "Add/Edit budget" modal state: which category, name, month/year, amount, error, saving. Shared for both add and edit flows.
     const [budgetForm, setBudgetForm] = useState<{
         categoryId: number | null;
         name: string;
@@ -69,6 +78,7 @@ export default function Categories() {
         saving: false,
     });
 
+    // Opens add-category modal and resets form to current month/year and empty name/amount
     function openAddModal() {
         setAddModal((prev) => ({
             ...prev,
@@ -81,6 +91,7 @@ export default function Categories() {
         }));
     }
 
+    // Closes add modal and clears all fields; used on cancel or after successful submit
     function closeAddModal() {
         setAddModal({
             open: false,
@@ -93,6 +104,7 @@ export default function Categories() {
         });
     }
 
+    // Submit handler for "Add category" form: validates name/amount, calls addCategory (API), then addBudget if amount given; closes modal on success, sets error on failure
     async function handleAddCategoryWithBudget(e: React.FormEvent) {
         e.preventDefault();
         const name = addModal.name.trim();
@@ -125,6 +137,7 @@ export default function Categories() {
         }
     }
 
+    // Runs when user confirms delete: calls removeCategory (API), then clears deleteId to close ConfirmModal
     async function handleDelete(id: number) {
         setDeleting(true);
         try {
@@ -136,6 +149,7 @@ export default function Categories() {
         }
     }
 
+    // Opens budget modal for a category: pre-fills name from categories, amount/month/year from existing budget for current month if any
     function openBudgetForm(categoryId: number) {
         const cat = categories.find((c) => c.id === categoryId);
         const existing = budgets.find(
@@ -152,6 +166,7 @@ export default function Categories() {
         }));
     }
 
+    // Closes budget modal and resets form; used on cancel or after successful save
     function closeBudgetForm() {
         setBudgetForm({
             categoryId: null,
@@ -164,6 +179,7 @@ export default function Categories() {
         });
     }
 
+    // Submit handler for budget form: validates name/amount; updates category name via updateCategory if changed; then updateBudget or addBudget (API) and closes modal
     async function handleSaveBudget(e: React.FormEvent) {
         e.preventDefault();
         if (budgetForm.categoryId == null) return;
@@ -208,8 +224,10 @@ export default function Categories() {
         }
     }
 
+    // Main layout: header with count + "Add category" button, then loading / error / empty / list, then modals (budget, add, delete)
     return (
         <div className="space-y-8">
+            {/* Title, description, category count badge, and primary CTA; connected to openAddModal */}
             <PageHeader
                 title="Categories"
                 description="Organize expenses and set budgets by category"
@@ -225,21 +243,21 @@ export default function Categories() {
                             onClick={openAddModal}
                             className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#4863D4] px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#3a50b8] focus:outline-none focus:ring-2 focus:ring-[#4863D4] focus:ring-offset-2"
                         >
-                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                            </svg>
+                            <PlusIcon />
                             Add category
                         </button>
                     </>
                 }
             />
 
+            {/* Shown while useCategories is loading; no other content */}
             {loading && (
                 <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-slate-500 shadow-sm">
                     Loading…
                 </div>
             )}
 
+            {/* Shown when useCategories returned error; refetch triggers a retry */}
             {!loading && error && (
                 <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center shadow-sm">
                     <p className="text-red-700">{error}</p>
@@ -249,6 +267,7 @@ export default function Categories() {
                 </div>
             )}
 
+            {/* Empty state when no categories exist; prompts user to add first category */}
             {!loading && !error && categories.length === 0 && (
                 <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 py-12 px-6 text-center">
                     <p className="text-slate-600">No categories yet</p>
@@ -256,6 +275,7 @@ export default function Categories() {
                 </div>
             )}
 
+            {/* Grid of category cards; each CategoryRow gets category, budgetByCategory entry, and callbacks for delete / add-edit budget */}
             {!loading && !error && categories.length > 0 && (
                 <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                     {categories.map((cat) => (
@@ -273,6 +293,7 @@ export default function Categories() {
                 </ul>
             )}
 
+            {/* Add/Edit budget modal overlay; form submits to handleSaveBudget; backdrop click closes via closeBudgetForm */}
             {budgetForm.categoryId !== null && (
                 <div
                     className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 p-4"
@@ -365,6 +386,7 @@ export default function Categories() {
                 </div>
             )}
 
+            {/* Add category modal overlay; form submits to handleAddCategoryWithBudget; backdrop click closes via closeAddModal */}
             {addModal.open && (
                 <div
                     className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 p-4"
@@ -450,6 +472,7 @@ export default function Categories() {
                 </div>
             )}
 
+            {/* Delete confirmation modal; confirm runs handleDelete(deleteId), cancel sets deleteId to null */}
             {deleteId !== null && (
                 <ConfirmModal
                     message={`Delete "${categories.find((c) => c.id === deleteId)?.name}"? Expenses may lose their category.`}
@@ -464,7 +487,8 @@ export default function Categories() {
     );
 }
 
-
+// --- CategoryRow: types and presentational row for one category card ---
+// Receives category + optional budget info (from budgetByCategory); used only inside this file in the categories grid
 interface BudgetInfo {
     limit: number;
     spent: number;
@@ -479,6 +503,7 @@ interface CategoryRowProps {
     onAddBudgetClick: () => void;
 }
 
+// Renders one category card: name, month/year label, spent vs limit progress (or "no budget" copy), delete and add/edit budget buttons. Uses formatAmount and MONTH_NAMES.
 function CategoryRow({
     cat,
     budgetInfo,
@@ -487,6 +512,7 @@ function CategoryRow({
     onDeleteClick,
     onAddBudgetClick,
 }: CategoryRowProps) {
+    // Derived for progress display: whether category has a budget, amount left, over-budget flag, and percentage for bar width
     const hasBudget = budgetInfo && budgetInfo.limit > 0;
     const left = hasBudget ? budgetInfo!.limit - budgetInfo!.spent : 0;
     const overBudget = hasBudget && budgetInfo!.spent > budgetInfo!.limit;
@@ -499,9 +525,7 @@ function CategoryRow({
             <div className="flex items-start justify-between gap-2">
                 <div className="flex min-w-0 items-center gap-2">
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e8ecfc] text-[#4863D4]">
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                        </svg>
+                        <CategoryIcon />
                     </span>
                     <div>
                         <h3 className="truncate font-semibold text-slate-900">{cat.name}</h3>
@@ -517,9 +541,7 @@ function CategoryRow({
                         className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600"
                         aria-label="Delete category"
                     >
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
+                        <DeleteIcon />
                     </button>
                 </div>
             </div>

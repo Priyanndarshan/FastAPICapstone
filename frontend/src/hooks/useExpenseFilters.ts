@@ -1,8 +1,18 @@
+// Used by: Expenses.tsx. Provides filter state, dropdown open/refs, outside-click close, and builds ExpenseFilters for API. Depends on: api/expenses (ExpenseFilters).
+import type { RefObject } from "react";
 import { useState, useRef, useEffect } from "react";
 import type { ExpenseFilters } from "../api/expenses";
 
+// Optional: pass export menu ref + setter so the hook closes the export dropdown on outside click
+export interface UseExpenseFiltersOptions {
+    exportMenuRef?: RefObject<HTMLDivElement | null>;
+    setExportMenuOpen?: (open: boolean) => void;
+}
+
+// Duration presets for the date-range filter; "custom" uses filterStart/filterEnd
 export type DurationFilter = "all_time" | "today" | "this_week" | "this_month" | "custom";
 
+// Converts duration + optional custom dates into start/end YYYY-MM-DD for API; used by the onFilterChange effect
 function getDateRange(
     duration: DurationFilter,
     filterStart: string,
@@ -40,7 +50,11 @@ function getDateRange(
     return {};
 }
 
-export function useExpenseFilters(onFilterChange: (filters: ExpenseFilters) => void) {
+export function useExpenseFilters(
+    onFilterChange: (filters: ExpenseFilters) => void,
+    options?: UseExpenseFiltersOptions
+) {
+    // Filter values: duration (and custom start/end), type, payment modes, category, recurring, search; payment modes dropdown open
     const [duration, setDuration] = useState<DurationFilter>("all_time");
     const [filterStart, setFilterStart] = useState("");
     const [filterEnd, setFilterEnd] = useState("");
@@ -54,11 +68,25 @@ export function useExpenseFilters(onFilterChange: (filters: ExpenseFilters) => v
     const paymentModesRef = useRef<HTMLDivElement>(null);
     const didMount = useRef(false);
 
+    // Dropdown open state + refs for type, duration, category, sort, recurring (so Expenses can close on outside click)
+    const [typeFilterOpen, setTypeFilterOpen] = useState(false);
+    const [durationDropdownOpen, setDurationDropdownOpen] = useState(false);
+    const [categoryFilterOpen, setCategoryFilterOpen] = useState(false);
+    const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
+    const [recurringFilterOpen, setRecurringFilterOpen] = useState(false);
+    const typeFilterRef = useRef<HTMLDivElement>(null);
+    const durationDropdownRef = useRef<HTMLDivElement>(null);
+    const categoryFilterRef = useRef<HTMLDivElement>(null);
+    const sortDropdownRef = useRef<HTMLDivElement>(null);
+    const recurringFilterRef = useRef<HTMLDivElement>(null);
+
+    // Debounce search keyword so API isn’t hit on every keystroke
     useEffect(() => {
         const t = setTimeout(() => setDebouncedKeyword(searchKeyword), 400);
         return () => clearTimeout(t);
     }, [searchKeyword]);
 
+    // When filter values change, build ExpenseFilters and call onFilterChange (skip first mount to avoid double fetch)
     useEffect(() => {
         if (!didMount.current) {
             didMount.current = true;
@@ -75,6 +103,37 @@ export function useExpenseFilters(onFilterChange: (filters: ExpenseFilters) => v
         onFilterChange(next);
     }, [duration, filterStart, filterEnd, filterType, paymentModeSelected, filterCategoryId, debouncedKeyword]);
 
+    // Close all dropdowns (including payment modes and optional export menu) when clicking outside their refs
+    useEffect(() => {
+        function handleClickOutside(e: MouseEvent) {
+            const target = e.target as Node;
+            if (paymentModesRef.current && !paymentModesRef.current.contains(target)) {
+                setPaymentModesOpen(false);
+            }
+            if (typeFilterRef.current && !typeFilterRef.current.contains(target)) {
+                setTypeFilterOpen(false);
+            }
+            if (durationDropdownRef.current && !durationDropdownRef.current.contains(target)) {
+                setDurationDropdownOpen(false);
+            }
+            if (categoryFilterRef.current && !categoryFilterRef.current.contains(target)) {
+                setCategoryFilterOpen(false);
+            }
+            if (recurringFilterRef.current && !recurringFilterRef.current.contains(target)) {
+                setRecurringFilterOpen(false);
+            }
+            if (sortDropdownRef.current && !sortDropdownRef.current.contains(target)) {
+                setSortDropdownOpen(false);
+            }
+            if (options?.exportMenuRef?.current && !options.exportMenuRef.current.contains(target)) {
+                options.setExportMenuOpen?.(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [options?.exportMenuRef, options?.setExportMenuOpen]);
+
+    // Reset all filter state, close all dropdowns, and notify parent with empty filters
     function clearFilters() {
         setDuration("all_time");
         setFilterStart("");
@@ -86,9 +145,15 @@ export function useExpenseFilters(onFilterChange: (filters: ExpenseFilters) => v
         setSearchKeyword("");
         setDebouncedKeyword("");
         setPaymentModesOpen(false);
+        setTypeFilterOpen(false);
+        setDurationDropdownOpen(false);
+        setCategoryFilterOpen(false);
+        setSortDropdownOpen(false);
+        setRecurringFilterOpen(false);
         onFilterChange({});
     }
 
+    // True if any filter is set (used to show "Clear All" and empty-state messaging)
     const hasActiveFilters =
         duration !== "all_time" ||
         !!filterType ||
@@ -97,6 +162,7 @@ export function useExpenseFilters(onFilterChange: (filters: ExpenseFilters) => v
         !!filterRecurring ||
         !!searchKeyword.trim();
 
+    // Public API: filter values + setters, refs, clearFilters, hasActiveFilters, getDateRange, and dropdown open state + refs
     return {
         duration,
         setDuration,
@@ -121,5 +187,20 @@ export function useExpenseFilters(onFilterChange: (filters: ExpenseFilters) => v
         clearFilters,
         hasActiveFilters,
         getDateRange: () => getDateRange(duration, filterStart, filterEnd),
+        typeFilterOpen,
+        setTypeFilterOpen,
+        durationDropdownOpen,
+        setDurationDropdownOpen,
+        categoryFilterOpen,
+        setCategoryFilterOpen,
+        sortDropdownOpen,
+        setSortDropdownOpen,
+        recurringFilterOpen,
+        setRecurringFilterOpen,
+        typeFilterRef,
+        durationDropdownRef,
+        categoryFilterRef,
+        sortDropdownRef,
+        recurringFilterRef,
     };
 }

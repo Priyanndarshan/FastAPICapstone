@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { ROUTES } from "../config/constants";
+import { BackIcon, EditIcon, LogoutIcon } from "../components/ui/icons";
 import { input } from "../styles/ui";
 
 function ProfileField({
@@ -102,9 +103,7 @@ function ProfileField({
           className="shrink-0 rounded p-1.5 text-[#4863D4] hover:bg-[#e8ecfc] focus:outline-none focus:ring-2 focus:ring-[#4863D4]"
           aria-label={`Edit ${label}`}
         >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-          </svg>
+          <EditIcon />
         </button>
       </div>
     </div>
@@ -130,9 +129,7 @@ export default function Profile() {
           className="rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#4863D4]"
           aria-label="Back"
         >
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
+          <BackIcon className="h-5 w-5" />
         </Link>
         <h1 className="text-2xl font-bold text-slate-900">Your Profile Details</h1>
       </div>
@@ -166,9 +163,7 @@ export default function Profile() {
             className="inline-flex items-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-700 focus:outline-none focus:ring-0"
             aria-label="Logout"
           >
-            <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
+            <LogoutIcon className="h-4 w-4 shrink-0" />
             Logout
           </button>
         </div>
