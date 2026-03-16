@@ -31,7 +31,7 @@ export default function ExpenseFiltersBar({
     onAddCashOut,
 }: ExpenseFiltersBarProps) {
     return (
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
             <div className="space-y-3 border-b border-slate-200 p-4">
                 <div className="flex flex-wrap items-center gap-2">
                     <div className="relative" ref={filters.durationDropdownRef}>

@@ -1,25 +1,35 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import * as budgetsApi from "../api/budgets";
 import type { BudgetCreatePayload, BudgetUpdatePayload } from "../api/budgets";
 import type { Budget } from "../types";
 import { parseApiError } from "../utils/parseApiError";
-import { useAsyncState } from "./useAsyncState";
 
 export function useBudgets() {
-    const { data: budgets, loading, error, run, setData } = useAsyncState<Budget[]>([]);
+    const [budgets, setBudgets] = useState<Budget[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
 
     useEffect(() => {
         fetchBudgets();
     }, []);
 
     async function fetchBudgets() {
-        await run(() => budgetsApi.getBudgets());
+        setLoading(true);
+        setError("");
+        try {
+            const data = await budgetsApi.getBudgets();
+            setBudgets(data);
+        } catch (err) {
+            setError(parseApiError(err, "Failed to load budgets."));
+        } finally {
+            setLoading(false);
+        }
     }
 
     async function addBudget(payload: BudgetCreatePayload) {
         try {
             const budget = await budgetsApi.createBudget(payload);
-            setData((prev) => [...prev, budget]);
+            setBudgets((prev) => [...prev, budget]);
         } catch (err) {
             throw new Error(parseApiError(err, "Failed to add budget."));
         }
@@ -28,7 +38,7 @@ export function useBudgets() {
     async function updateBudget(id: number, payload: BudgetUpdatePayload) {
         try {
             const budget = await budgetsApi.updateBudget(id, payload);
-            setData((prev) => prev.map((b) => (b.id === id ? budget : b)));
+            setBudgets((prev) => prev.map((b) => (b.id === id ? budget : b)));
         } catch (err) {
             throw new Error(parseApiError(err, "Failed to update budget."));
         }
@@ -37,7 +47,7 @@ export function useBudgets() {
     async function removeBudget(id: number) {
         try {
             await budgetsApi.deleteBudget(id);
-            setData((prev) => prev.filter((b) => b.id !== id));
+            setBudgets((prev) => prev.filter((b) => b.id !== id));
         } catch (err) {
             throw new Error(parseApiError(err, "Failed to delete budget."));
         }

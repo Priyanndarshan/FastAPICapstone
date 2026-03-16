@@ -1,8 +1,7 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import * as analyticsApi from "../api/analytics";
 import type { MonthlyAnalytics, TopCategory, TrendPoint } from "../types";
 import { parseApiError } from "../utils/parseApiError";
-import { useAsyncState } from "./useAsyncState";
 
 interface AnalyticsData {
     monthly: MonthlyAnalytics | null;
@@ -25,21 +24,29 @@ export function useAnalytics(
     year = defaultYear,
     trendMonths = 6
 ) {
-    const { data, loading, error, run } = useAsyncState<AnalyticsData>(initialData);
+    const [data, setData] = useState<AnalyticsData>(initialData);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
 
     const fetchAll = useCallback(async () => {
-        await run(async () => {
+        setLoading(true);
+        setError("");
+        try {
             const [monthly, topCategory, trendRes] = await Promise.all([
                 analyticsApi.getMonthlyAnalytics(month, year),
                 analyticsApi.getTopCategory(month, year),
                 analyticsApi.getTrend(trendMonths),
             ]);
-            return {
+            setData({
                 monthly,
                 topCategory,
                 trend: trendRes.points ?? [],
-            };
-        });
+            });
+        } catch (err) {
+            setError(parseApiError(err, "Failed to load analytics."));
+        } finally {
+            setLoading(false);
+        }
     }, [month, year, trendMonths]);
 
     useEffect(() => {

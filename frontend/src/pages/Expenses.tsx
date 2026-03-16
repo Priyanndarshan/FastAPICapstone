@@ -150,7 +150,7 @@ export default function Expenses() {
                 />
             )}
 
-                    <CashFlowSummaryCard cashIn={cashIn} cashOut={cashOut} loading={loading} />
+            <CashFlowSummaryCard cashIn={cashIn} cashOut={cashOut} loading={loading} />
 
             <ExpenseFiltersBar
                 filters={filters}
@@ -161,61 +161,61 @@ export default function Expenses() {
                 }}
                 categories={categories}
                 onAddCashIn={() => {
-                                setShowAddForm("in");
-                                setAddError("");
-                                setForm({ ...defaultPayload, transaction_type: "in" });
-                            }}
+                    setShowAddForm("in");
+                    setAddError("");
+                    setForm({ ...defaultPayload, transaction_type: "in" });
+                }}
                 onAddCashOut={() => {
-                                setShowAddForm("out");
-                                setAddError("");
-                                setForm({ ...defaultPayload, transaction_type: "out" });
-                            }}
+                    setShowAddForm("out");
+                    setAddError("");
+                    setForm({ ...defaultPayload, transaction_type: "out" });
+                }}
             />
 
-                {loading && (
-                    <div className="py-12 text-center text-slate-500">
-                        Loading…
-                    </div>
-                )}
+            {loading && (
+                <div className="py-12 text-center text-slate-500">
+                    Loading…
+                </div>
+            )}
 
-                {!loading && error && (
-                    <div className="border-t border-slate-200 bg-red-50/50 p-6 text-center">
-                        <p className="text-red-700">{error}</p>
+            {!loading && error && (
+                <div className="border-t border-slate-200 bg-red-50/50 p-6 text-center">
+                    <p className="text-red-700">{error}</p>
                     <button
                         type="button"
                         onClick={() => refetch()}
                         className="mt-3 text-sm font-medium text-[#4863D4] hover:underline"
                     >
-                            Try again
-                        </button>
-                    </div>
-                )}
+                        Try again
+                    </button>
+                </div>
+            )}
 
-                {!loading && !error && expenses.length === 0 && (
-                    <div className="border-t border-slate-200 py-16 text-center">
-                        <p className="text-slate-500">No expenses yet.</p>
+            {!loading && !error && expenses.length === 0 && (
+                <div className="border-t border-slate-200 py-16 text-center">
+                    <p className="text-slate-500">No expenses yet.</p>
                     <p className="mt-1 text-sm text-slate-400">
                         Use &quot;Cash In&quot; or &quot;Cash Out&quot; above to add one, or clear filters.
                     </p>
-                    </div>
-                )}
+                </div>
+            )}
 
             {!loading && !error && expenses.length > 0 && paginated.isEmpty && (
-                            <div className="border-t border-slate-200 py-12 text-center">
-                                <p className="text-slate-500">No expenses match the recurring filter.</p>
-                                <p className="mt-1 text-sm text-slate-400">Try changing or clearing filters.</p>
-                            </div>
+                <div className="border-t border-slate-200 py-12 text-center">
+                    <p className="text-slate-500">No expenses match the recurring filter.</p>
+                    <p className="mt-1 text-sm text-slate-400">Try changing or clearing filters.</p>
+                </div>
             )}
 
             {!loading && !error && expenses.length > 0 && !paginated.isEmpty && (
                 <ExpenseTable
                     pageExpenses={paginated.pageExpenses}
-                                                        categories={categories}
+                    categories={categories}
                     editId={editId}
                     editForm={editForm}
                     setEditForm={setEditForm}
                     editError={editError}
-                                                        saving={saving}
+                    saving={saving}
                     totalCount={paginated.totalCount}
                     currentPage={paginated.currentPage}
                     totalPages={paginated.totalPages}
