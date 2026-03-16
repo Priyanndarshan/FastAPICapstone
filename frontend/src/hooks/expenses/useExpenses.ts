@@ -3,9 +3,9 @@ import * as expensesApi from "../../api/expenses";
 import type { ExpenseFilters, ExpensePayload } from "../../api/expenses";
 import type { Expense } from "../../types";
 import { parseApiError } from "../../utils/parseApiError";
+import { normalizeIsoDate } from "../../utils/formatters";
 
 const AMOUNT_ERROR = "Enter a valid amount.";
-const ISO_DATE_RE = /^\\d{4}-\\d{2}-\\d{2}$/;
 
 function validateAmount(amount: string): string {
     const trimmed = amount.trim();
@@ -13,15 +13,6 @@ function validateAmount(amount: string): string {
     const num = Number(trimmed);
     if (isNaN(num) || num <= 0) throw new Error(AMOUNT_ERROR);
     return trimmed;
-}
-
-function normalizeIsoDate(value: string | undefined): string | undefined {
-    if (!value) return undefined;
-    const trimmed = value.trim();
-    if (ISO_DATE_RE.test(trimmed)) return trimmed;
-    // Accept datetime-like strings by taking the date prefix (e.g. 2026-03-17T00:00:00Z)
-    const prefix = trimmed.slice(0, 10);
-    return ISO_DATE_RE.test(prefix) ? prefix : undefined;
 }
 
 export function useExpenses(initialFilters?: ExpenseFilters) {

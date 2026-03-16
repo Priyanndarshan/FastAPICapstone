@@ -33,3 +33,14 @@ export function countExpensesInMonth(
     return y === year && m === month;
   }).length;
 }
+
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+export function normalizeIsoDate(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  if (ISO_DATE_RE.test(trimmed)) return trimmed;
+  // Accept datetime-like strings by taking the date prefix (e.g. 2026-03-17T00:00:00Z)
+  const prefix = trimmed.slice(0, 10);
+  return ISO_DATE_RE.test(prefix) ? prefix : undefined;
+}
