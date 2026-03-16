@@ -9,6 +9,7 @@ import { useAnalytics } from "../hooks/useAnalytics";
 import { useExpenses } from "../hooks/useExpenses";
 import { useCategories } from "../hooks/useCategories";
 import { useBudgets } from "../hooks/useBudgets";
+import { useBudgetByCategory } from "../hooks/useBudgetByCategory";
 import { formatAmount } from "../utils/formatters";
 
 export default function Dashboard() {
@@ -35,26 +36,7 @@ export default function Dashboard() {
         id ? categories.find((c) => c.id === id)?.name ?? "—" : "—";
 
     // Map categoryId → { limit, spent } for current month; merges budgets with monthly analytics spending
-    const budgetByCategory = useMemo(() => {
-        const map: Record<number, { limit: number; spent: number }> = {};
-        const thisMonthBudgets = budgets.filter(
-            (b) => b.month === currentMonth && b.year === currentYear
-        );
-        for (const b of thisMonthBudgets) {
-            map[b.category_id] = { limit: Number(b.limit_amount), spent: 0 };
-        }
-        for (const c of monthly?.categories ?? []) {
-            if (c.category_id != null) {
-                const spent = Number(c.total_amount);
-                if (map[c.category_id]) {
-                    map[c.category_id].spent = spent;
-                } else {
-                    map[c.category_id] = { limit: 0, spent };
-                }
-            }
-        }
-        return map;
-    }, [budgets, monthly, currentMonth, currentYear]);
+    const budgetByCategory = useBudgetByCategory(currentMonth, currentYear, budgets, monthly);
 
     // List of categories where spent > limit this month; used for the red warning banner
     const overBudgetCategories = useMemo(() => {

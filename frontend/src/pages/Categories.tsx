@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { useCategories } from "../hooks/useCategories";
 import { useBudgets } from "../hooks/useBudgets";
 import { useAnalytics } from "../hooks/useAnalytics";
+import { useBudgetByCategory } from "../hooks/useBudgetByCategory";
 import type { Category } from "../types";
 import { MONTH_NAMES } from "../config/constants";
 import { AddCategoryModal, BudgetFormModal, CategoryRow, ConfirmModal, PageHeader } from "../components/shared";
@@ -22,26 +23,7 @@ export default function Categories() {
     const { monthly } = useAnalytics(currentMonth, currentYear, 1);
 
     // Derives a map: categoryId → { limit, spent } for current month. Merges budgets (limit) with analytics (spent). Used by CategoryRow to show progress bars.
-    const budgetByCategory = useMemo(() => {
-        const map: Record<number, { limit: number; spent: number }> = {};
-        const thisMonthBudgets = budgets.filter(
-            (b) => b.month === currentMonth && b.year === currentYear
-        );
-        for (const b of thisMonthBudgets) {
-            map[b.category_id] = { limit: Number(b.limit_amount), spent: 0 };
-        }
-        for (const c of monthly?.categories ?? []) {
-            if (c.category_id != null) {
-                const spent = Number(c.total_amount);
-                if (map[c.category_id]) {
-                    map[c.category_id].spent = spent;
-                } else {
-                    map[c.category_id] = { limit: 0, spent };
-                }
-            }
-        }
-        return map;
-    }, [budgets, monthly]);
+    const budgetByCategory = useBudgetByCategory(currentMonth, currentYear, budgets, monthly);
 
     // "Add category" modal state: only visibility; form state lives in AddCategoryModal
     const [addModal, setAddModal] = useState({ open: false });
