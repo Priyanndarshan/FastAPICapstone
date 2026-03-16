@@ -16,7 +16,8 @@ class ExpenseUpdate(BaseModel):
     amount: Optional[Decimal] = Field(default=None, gt=0)
     payment_mode: Optional[str] = Field(default=None, max_length=20)
     transaction_type: Optional[str] = Field(default=None, pattern="^(in|out)$")
-    date: Optional[date] = None
+    # Accept date as ISO string to play nicely with the frontend; service parses it.
+    date: Optional[str] = None
     notes: Optional[str] = Field(default=None, max_length=500)
     is_recurring: Optional[bool] = None
     recurrence_period: Optional[str] = Field(default=None, max_length=20)

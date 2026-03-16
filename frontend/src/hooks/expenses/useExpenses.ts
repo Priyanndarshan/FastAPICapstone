@@ -3,7 +3,6 @@ import * as expensesApi from "../../api/expenses";
 import type { ExpenseFilters, ExpensePayload } from "../../api/expenses";
 import type { Expense } from "../../types";
 import { parseApiError } from "../../utils/parseApiError";
-import { normalizeIsoDate } from "../../utils/formatters";
 
 const AMOUNT_ERROR = "Enter a valid amount.";
 
@@ -39,8 +38,7 @@ export function useExpenses(initialFilters?: ExpenseFilters) {
 
     async function addExpense(payload: ExpensePayload) {
         const amount = validateAmount(payload.amount);
-        const date = normalizeIsoDate(payload.date);
-        if (!date) throw new Error("Enter a valid date.");
+        const date = payload.date.trim();
         try {
             const expense = await expensesApi.createExpense({
                 ...payload,
@@ -62,8 +60,8 @@ export function useExpenses(initialFilters?: ExpenseFilters) {
 
     async function updateExpense(id: number, payload: Partial<ExpensePayload>) {
         const amount = validateAmount(payload.amount ?? "");
-        const date = normalizeIsoDate(payload.date);
         try {
+            const date = payload.date?.trim();
             const updateBody: Partial<ExpensePayload> = {
                 ...payload,
                 amount,
@@ -75,9 +73,9 @@ export function useExpenses(initialFilters?: ExpenseFilters) {
                     ? (payload.recurrence_period && payload.recurrence_period.trim() ? payload.recurrence_period : null)
                     : null,
             };
-            // Only send `date` if it's a valid ISO date; otherwise omit to avoid 422s.
-            if (date) updateBody.date = date;
-            else delete (updateBody as { date?: unknown }).date;
+            if (date) {
+                updateBody.date = date;
+            }
 
             const expense = await expensesApi.updateExpense(id, updateBody);
             setExpenses((prev) => prev.map((e) => (e.id === id ? expense : e)));
