@@ -9,7 +9,7 @@ import { useCategories } from "../hooks/categories/useCategories";
 import { useBudgets } from "../hooks/budgets/useBudgets";
 import { useBudgetByCategory } from "../hooks/categories/useBudgetByCategory";
 import { useOverBudgetCategories } from "../hooks/categories/useOverBudgetCategories";
-import { countExpensesInMonth } from "../utils/formatters";
+import { countExpensesInMonth, formatAmount } from "../utils/formatters";
 
 export default function Dashboard() {
     // Current user and local UI state: whether the over-budget warning banner has been dismissed
@@ -21,7 +21,7 @@ export default function Dashboard() {
     const currentYear = now.getFullYear();
 
     // Analytics (6 months trend + monthly breakdown), expenses list, categories, budgets; second useAnalytics for pie chart month/year
-    const { monthly, trend, loading: analyticsLoading, error: analyticsError, refetch: refetchAnalytics } = useAnalytics(currentMonth, currentYear, 6);
+    const { monthly, trend, topCategory, loading: analyticsLoading, error: analyticsError, refetch: refetchAnalytics } = useAnalytics(currentMonth, currentYear, 6);
     const [pieChartMonth, setPieChartMonth] = useState(currentMonth);
     const [pieChartYear, setPieChartYear] = useState(currentYear);
     const { monthly: pieChartMonthly, loading: pieChartLoading } = useAnalytics(pieChartMonth, pieChartYear, 1);
@@ -54,6 +54,11 @@ export default function Dashboard() {
                         <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
                             {categories.length} categor{categories.length === 1 ? "y" : "ies"}
                         </span>
+                        {!analyticsLoading && topCategory && (
+                            <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-800">
+                                Top: {topCategory.category_name ?? "Uncategorized"} – {formatAmount(Number(topCategory.total_amount))}
+                            </span>
+                        )}
                     </>
                 }
             />

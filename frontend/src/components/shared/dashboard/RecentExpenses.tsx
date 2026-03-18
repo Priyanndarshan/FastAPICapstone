@@ -62,10 +62,10 @@ export default function RecentExpenses({ expenses, categories, loading }: Recent
                 </div>
                 <span
                   className={`ml-4 shrink-0 tabular-nums text-sm font-medium ${
-                    exp.transaction_type === "in" ? "text-[#4863D4]" : "text-red-600"
+                    exp.transaction_type === "in" ? "text-emerald-600" : "text-red-600"
                   }`}
                 >
-                  {exp.transaction_type === "in" ? "+" : ""}
+                  {exp.transaction_type === "out" ? "-" : ""}
                   {formatAmount(Number(exp.amount))}{" "}
                   <span className="text-slate-400">({exp.payment_mode})</span>
                 </span>

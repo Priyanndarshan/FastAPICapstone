@@ -2,8 +2,9 @@ import type { ExpensePayload } from "../../../api/expenses";
 import type { Category } from "../../../types";
 import { DatePicker } from "../../ui/DatePicker";
 import { CloseIcon } from "../../ui/icons";
-import { PAYMENT_MODES } from "../../../config/constants";
 import { input, btnPrimary, btnSecondary } from "../../../styles/ui";
+
+const PAYMENT_MODES = ["UPI", "CASH"] as const;
 
 export interface ExpenseFormModalProps {
     title: string;

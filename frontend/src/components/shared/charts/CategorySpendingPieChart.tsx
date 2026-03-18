@@ -7,7 +7,7 @@ import type { MonthlyAnalytics } from "../../../types";
 const CHART_COLORS = [
     "rgb(72 99 212)",   // #4863D4
     "rgb(100 116 139)",  // slate-500
-    "rgb(72 99 212)",   // #4863D4 (lighter variant in palette)
+    "rgb(223, 255, 2)",   // #4863D4 (lighter variant in palette)
     "rgb(245 158 11)",   // amber-500
     "rgb(236 72 153)",   // pink-500
     "rgb(59 130 246)",   // blue-500

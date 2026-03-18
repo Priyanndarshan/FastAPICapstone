@@ -7,9 +7,10 @@ import {
     DeleteIcon,
     EditIcon,
 } from "../../ui/icons";
-import { PAYMENT_MODES } from "../../../config/constants";
 import { formatDateLabel } from "../../../utils/formatters";
 import { btnPrimary, btnSecondary, input } from "../../../styles/ui";
+
+const PAYMENT_MODES = ["UPI", "CASH"] as const;
 
 export interface ExpenseTableProps {
     pageExpenses: Expense[];
@@ -87,7 +88,7 @@ export default function ExpenseTable({
                     <thead>
                         <tr className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
                             <th className="px-4 py-3">Date</th>
-                            <th className="px-4 py-3">Details</th>
+                            <th className="px-4 py-3">Notes</th>
                             <th className="px-4 py-3">Category</th>
                             <th className="px-4 py-3">Mode</th>
                             <th className="px-4 py-3 text-right">Amount</th>
@@ -145,10 +146,10 @@ function ExpenseTableRow({
     return (
         <tr className="transition-colors hover:bg-slate-50/80">
             <td className="px-4 py-3 text-slate-700">{formatDateLabel(expense.date)}</td>
-            <td className="px-4 py-3">
+            <td className="max-w-[200px] px-4 py-3">
                 <div className="flex flex-wrap items-center gap-1.5">
                     {expense.notes ? (
-                        <span className="text-slate-800" title={expense.notes}>{expense.notes}</span>
+                        <span className="block max-w-full truncate text-slate-800" title={expense.notes}>{expense.notes}</span>
                     ) : (
                         <span className="text-slate-400">—</span>
                     )}
@@ -160,8 +161,8 @@ function ExpenseTableRow({
             <td className="px-4 py-3 text-slate-600">{categoryName}</td>
             <td className="px-4 py-3 text-slate-600">{expense.payment_mode}</td>
             <td className="px-4 py-3 text-right">
-                <span className={`font-semibold tabular-nums ${expense.transaction_type === "in" ? "text-[#4863D4]" : "text-red-600"}`}>
-                    {expense.transaction_type === "in" ? "+" : ""}{expense.amount}
+                <span className={`font-semibold tabular-nums ${expense.transaction_type === "in" ? "text-emerald-600" : "text-red-600"}`}>
+                    {expense.transaction_type === "out" ? "-" : ""}{expense.amount}
                 </span>
             </td>
             <td className="px-4 py-3 text-right">

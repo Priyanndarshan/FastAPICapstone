@@ -5,8 +5,10 @@ import type { Expense } from "../../types";
 import { parseApiError } from "../../utils/parseApiError";
 import { normalizeIsoDate } from "../../utils/formatters";
 
+// Shared validation message for amount inputs (used by add + update).
 const AMOUNT_ERROR = "Enter a valid amount.";
 
+// Ensures the amount is a non-empty, positive number-like string (e.g. "12.50").
 function validateAmount(amount: string): string {
     const trimmed = amount.trim();
     if (!trimmed) throw new Error(AMOUNT_ERROR);
@@ -15,15 +17,20 @@ function validateAmount(amount: string): string {
     return trimmed;
 }
 
+// Main expenses data hook: fetch list + expose add/update/delete helpers.
 export function useExpenses(initialFilters?: ExpenseFilters) {
+    // Data state: list of expenses from the API.
     const [expenses, setExpenses] = useState<Expense[]>([]);
+    // Request state: loading + error for the list fetch.
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
+    // Initial load on mount (optionally with filters).
     useEffect(() => {
         fetchExpenses(initialFilters);
     }, []);
 
+    // Fetch expenses from the backend and store them in local state.
     async function fetchExpenses(filters?: ExpenseFilters) {
         setLoading(true);
         setError("");
@@ -37,6 +44,7 @@ export function useExpenses(initialFilters?: ExpenseFilters) {
         }
     }
 
+    // Create a new expense (validates inputs, normalizes payload, then prepends to state).
     async function addExpense(payload: ExpensePayload) {
         const amount = validateAmount(payload.amount);
         const date = normalizeIsoDate(payload.date);
@@ -60,6 +68,7 @@ export function useExpenses(initialFilters?: ExpenseFilters) {
         }
     }
 
+    // Update an existing expense by id (validates inputs, normalizes payload, then replaces in state).
     async function updateExpense(id: number, payload: Partial<ExpensePayload>) {
         const amount = validateAmount(payload.amount ?? "");
         const date = normalizeIsoDate(payload.date);
@@ -86,6 +95,7 @@ export function useExpenses(initialFilters?: ExpenseFilters) {
         }
     }
 
+    // Delete an expense by id (backend delete, then remove from local state).
     async function removeExpense(id: number) {
         try {
             await expensesApi.deleteExpense(id);
@@ -95,6 +105,7 @@ export function useExpenses(initialFilters?: ExpenseFilters) {
         }
     }
 
+    // Public API for pages/components: list + loading/error + CRUD helpers.
     return {
         expenses,
         loading,

@@ -9,7 +9,8 @@ import {
     SearchIcon,
     SortIcon,
 } from "../../ui/icons";
-import { PAYMENT_MODES } from "../../../config/constants";
+
+const PAYMENT_MODES = ["UPI", "CASH"] as const;
 
 export type SortOption = "date" | "amount_desc" | "amount_asc";
 
@@ -466,7 +467,7 @@ export default function ExpenseFiltersBar({
                         <button
                             type="button"
                             onClick={onAddCashIn}
-                            className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#4863D4] px-4 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#3a50b8] focus:outline-none focus:ring-2 focus:ring-[#4863D4] focus:ring-offset-2"
+                            className="inline-flex h-10 items-center gap-2 rounded-lg bg-emerald-600 px-4 text-sm font-medium text-white shadow-sm transition-colors hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
                         >
                             <PlusIcon className="h-5 w-5" aria-hidden />
                             Cash In

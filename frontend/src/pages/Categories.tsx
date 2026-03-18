@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { AddCategoryModal, BudgetFormModal, CategoryRow, ConfirmModal, PageHeader } from "../components/shared";
 import { useCategories } from "../hooks/categories/useCategories";
 import { useBudgets } from "../hooks/budgets/useBudgets";
 import { useAnalytics } from "../hooks/analytics/useAnalytics";
 import { PlusIcon } from "../components/ui/icons";
+import { useBudgetByCategory } from "../hooks/categories/useBudgetByCategory";
 
 const now = new Date();
 const currentMonth = now.getMonth() + 1;
@@ -21,25 +22,8 @@ export default function Categories() {
     const [budgetForm, setBudgetForm] = useState<{ categoryId: number | null }>({ categoryId: null });
     const [budgetFormInitial, setBudgetFormInitial] = useState({ name: "", amount: "" });
 
-    // Derived map: categoryId → { limit, spent } (only used on this page)
-    const budgetByCategory = useMemo(() => {
-        const map: { [key: number]: { limit: number; spent: number } } = {};
-        const thisMonthBudgets = budgets.filter((b) => b.month === currentMonth && b.year === currentYear);
-        for (const b of thisMonthBudgets) {
-            map[b.category_id] = { limit: Number(b.limit_amount), spent: 0 };
-        }
-        for (const c of monthly?.categories ?? []) {
-            if (c.category_id != null) {
-                const spent = Number(c.total_amount);
-                if (map[c.category_id]) {
-                    map[c.category_id].spent = spent;
-                } else {
-                    map[c.category_id] = { limit: 0, spent };
-                }
-            }
-        }
-        return map;
-    }, [budgets, monthly]);
+    // Derived map: categoryId → { limit, spent } via shared hook
+    const budgetByCategory = useBudgetByCategory(currentMonth, currentYear, budgets, monthly);
 
     // UI handlers
     function openAddModal() {

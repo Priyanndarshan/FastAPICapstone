@@ -9,6 +9,7 @@ from app.repositories.expense_repository import (
     delete_expense,
     get_expense_for_user,
     list_expenses_for_user,
+    list_expenses_for_user_paged,
     save_expense,
 )
 def list_user_expenses(
@@ -34,6 +35,38 @@ def list_user_expenses(
         keyword=keyword,
         transaction_type=transaction_type,
         payment_modes=modes,
+    )
+
+
+def list_user_expenses_paged(
+    db: Session,
+    user_id: int,
+    *,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+    category_id: Optional[int] = None,
+    keyword: Optional[str] = None,
+    transaction_type: Optional[str] = None,
+    payment_modes: Optional[str] = None,
+    sort_by: str = "date",
+    page: int = 1,
+    page_size: int = 10,
+) -> tuple[list[Expense], int, float, float]:
+    modes = None
+    if payment_modes:
+        modes = [m.strip() for m in payment_modes.split(",") if m.strip()]
+    return list_expenses_for_user_paged(
+        db,
+        user_id,
+        start_date=start_date,
+        end_date=end_date,
+        category_id=category_id,
+        keyword=keyword,
+        transaction_type=transaction_type,
+        payment_modes=modes,
+        sort_by=sort_by,
+        page=page,
+        page_size=page_size,
     )
 def create_user_expense(db: Session, user_id: int, *, payload: dict) -> Expense:
     category_id = payload.get("category_id")

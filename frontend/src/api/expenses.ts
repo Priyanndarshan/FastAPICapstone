@@ -26,6 +26,26 @@ export async function getExpenses(filters?: ExpenseFilters): Promise<Expense[]> 
     return res.data;
 }
 
+export interface PaginatedExpensesResponse {
+    items: Expense[];
+    total: number;
+    page: number;
+    page_size: number;
+    cash_in_total: string;
+    cash_out_total: string;
+}
+
+export interface PagedExpenseQuery extends ExpenseFilters {
+    page: number;
+    page_size: number;
+    sort_by: "date" | "amount_desc" | "amount_asc";
+}
+
+export async function getExpensesPaged(query: PagedExpenseQuery): Promise<PaginatedExpensesResponse> {
+    const res = await api.get("/expenses/paged", { params: query });
+    return res.data;
+}
+
 export async function getExpense(id: number): Promise<Expense> {
     const res = await api.get(`/expenses/${id}`);
     return res.data;

@@ -5,12 +5,18 @@ from sqlalchemy.orm import Session
 from app.dependencies.auth_dependency import get_current_user
 from app.dependencies.db_dependency import get_db
 from app.models.user_model import User
-from app.schemas.expense_schema import ExpenseCreate, ExpenseResponse, ExpenseUpdate
+from app.schemas.expense_schema import (
+    ExpenseCreate,
+    ExpenseResponse,
+    ExpenseUpdate,
+    PaginatedExpensesResponse,
+)
 from app.services.expense_service import (
     create_user_expense,
     delete_user_expense,
     get_user_expense,
     list_user_expenses,
+    list_user_expenses_paged,
     update_user_expense,
 )
 router = APIRouter(prefix="/expenses", tags=["Expenses"])
@@ -35,6 +41,43 @@ def list_expenses(
         transaction_type=transaction_type,
         payment_modes=payment_modes,
     )
+
+
+@router.get("/paged", response_model=PaginatedExpensesResponse)
+def list_expenses_paged(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+    sort_by: str = Query("date", pattern="^(date|amount_desc|amount_asc)$"),
+    start_date: Optional[date] = Query(default=None),
+    end_date: Optional[date] = Query(default=None),
+    category_id: Optional[int] = Query(default=None),
+    keyword: Optional[str] = Query(default=None),
+    transaction_type: Optional[str] = Query(default=None, pattern="^(in|out)$"),
+    payment_modes: Optional[str] = Query(default=None, description="Comma-separated: UPI,CASH"),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    items, total, cash_in_total, cash_out_total = list_user_expenses_paged(
+        db,
+        current_user.id,
+        start_date=start_date,
+        end_date=end_date,
+        category_id=category_id,
+        keyword=keyword,
+        transaction_type=transaction_type,
+        payment_modes=payment_modes,
+        sort_by=sort_by,
+        page=page,
+        page_size=page_size,
+    )
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "cash_in_total": cash_in_total,
+        "cash_out_total": cash_out_total,
+    }
 @router.post("", response_model=ExpenseResponse)
 def create_expense(
     body: ExpenseCreate,

@@ -3,11 +3,11 @@ export { default as Layout } from "./layout/Layout";
 export { default as Navbar } from "./layout/Navbar";
 export { default as TopNav } from "./layout/TopNav";
 
-// shared UI
-export { default as ConfirmModal } from "./ui/ConfirmModal";
-export { default as PageHeader } from "./ui/PageHeader";
-export { default as CashFlowSummaryCard } from "./ui/CashFlowSummaryCard";
-export { default as OverBudgetBanner } from "./ui/OverBudgetBanner";
+// shared UI (widgets)
+export { default as ConfirmModal } from "./widgets/ConfirmModal";
+export { default as PageHeader } from "./widgets/PageHeader";
+export { default as CashFlowSummaryCard } from "./widgets/CashFlowSummaryCard";
+export { default as OverBudgetBanner } from "./widgets/OverBudgetBanner";
 
 // dashboard
 export { default as RecentExpenses } from "./dashboard/RecentExpenses";
