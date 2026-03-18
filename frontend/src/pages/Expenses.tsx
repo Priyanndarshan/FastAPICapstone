@@ -147,13 +147,14 @@ export default function Expenses() {
         setForm(defaultPayload);
     }
 
-    // Submit handler for the add modal: calls the hook, then closes/reset on success.
+    // Submit handler for the add modal: calls the hook, refetches table data, then closes/reset on success.
     async function handleAdd(e: React.FormEvent) {
         e.preventDefault();
         setAdding(true);
         setAddError("");
         try {
             await addExpense(form);
+            await refetch();
             closeAddForm();
         } catch (err) {
             setAddError((err as Error).message);
@@ -176,12 +177,13 @@ export default function Expenses() {
         setEditError("");
     }
 
-    // Save the inline edit form: update via hook, then exit edit mode.
+    // Save the inline edit form: update via hook, refetch table, then exit edit mode.
     async function handleSaveEdit(id: number) {
         setSaving(true);
         setEditError("");
         try {
             await updateExpense(id, editForm);
+            await refetch();
             cancelEdit();
         } catch (err) {
             setEditError((err as Error).message);
@@ -190,11 +192,12 @@ export default function Expenses() {
         }
     }
 
-    // Delete handler: calls the hook, then closes the confirm modal.
+    // Delete handler: calls the hook, refetches table, then closes the confirm modal.
     async function handleDelete(id: number) {
         setDeleting(true);
         try {
             await removeExpense(id);
+            await refetch();
             setDeleteId(null);
         } finally {
             setDeleting(false);
