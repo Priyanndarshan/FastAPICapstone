@@ -40,6 +40,8 @@ def register_user(db: Session, user_data: UserRegister):
         phone=user_data.phone,
     )
     return new_user
+
+    
 def update_user_profile(db: Session, user_id: int, data: UserProfileUpdate):
     payload = data.model_dump(exclude_unset=True)
     updated = update_user(db, user_id, **payload)

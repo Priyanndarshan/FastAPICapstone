@@ -13,6 +13,7 @@ from app.services.analytics_service import (
     get_top_category,
     get_trend,
 )
+
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
 @router.get("/monthly", response_model=MonthlyAnalyticsResponse)
 def monthly_analytics(
@@ -22,6 +23,8 @@ def monthly_analytics(
     db: Session = Depends(get_db),
 ):
     return get_monthly_analytics(db, current_user.id, month, year)
+
+
 @router.get("/top-category", response_model=TopCategoryResponse)
 def top_category(
     month: int = Query(..., ge=1, le=12),
@@ -30,6 +33,8 @@ def top_category(
     db: Session = Depends(get_db),
 ):
     return get_top_category(db, current_user.id, month, year)
+
+
 @router.get("/trend", response_model=TrendResponse)
 def spending_trend(
     months: int = Query(6, ge=1, le=60),

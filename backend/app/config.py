@@ -1,6 +1,9 @@
 from pydantic_settings import BaseSettings,SettingsConfigDict
 class Settings(BaseSettings):
     CLOUDINARY_URL: str = ""
+    CLOUDINARY_CLOUD_NAME: str = ""
+    CLOUDINARY_API_KEY: str = ""
+    CLOUDINARY_API_SECRET: str = ""
     DATABASE_URL: str
     SECRET_KEY: str
     ALGORITHM: str = "HS256"

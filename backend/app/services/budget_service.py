@@ -11,12 +11,14 @@ from app.repositories.budget_repository import (
 from app.repositories.category_repository import get_category_for_user
 def list_user_budgets(db: Session, user_id: int) -> list[Budget]:
     return list_budgets_for_user(db, user_id)
+
 def create_user_budget(db: Session, user_id: int, payload: dict) -> Budget:
     category_id = payload["category_id"]
     if not get_category_for_user(db, user_id, category_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
     budget = Budget(user_id=user_id, **payload)
     return create_budget(db, budget)
+    
 def get_user_budget(db: Session, user_id: int, budget_id: int) -> Budget:
     budget = get_budget_for_user(db, user_id, budget_id)
     if not budget:
