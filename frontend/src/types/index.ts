@@ -21,6 +21,7 @@ export interface Expense {
     notes: string | null;
     is_recurring: boolean;
     recurrence_period: string | null;
+    receipt_url?: string | null;  // optional Cloudinary URL for receipt image
 }
 
 export interface Budget {

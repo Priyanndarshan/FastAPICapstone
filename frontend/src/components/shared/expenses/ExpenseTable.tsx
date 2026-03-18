@@ -1,5 +1,7 @@
+import { useState, useRef } from "react";
 import type { Expense } from "../../../types";
 import type { ExpensePayload } from "../../../api/expenses";
+import { uploadReceipt } from "../../../api/expenses";
 import { DatePicker } from "../../ui/DatePicker";
 import {
     ChevronLeftIcon,
@@ -156,6 +158,16 @@ function ExpenseTableRow({
                     {expense.is_recurring && (
                         <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">Recurring</span>
                     )}
+                    {expense.receipt_url && (
+                        <a
+                            href={expense.receipt_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs font-medium text-[#4863D4] hover:underline"
+                        >
+                            Receipt
+                        </a>
+                    )}
                 </div>
             </td>
             <td className="px-4 py-3 text-slate-600">{categoryName}</td>
@@ -189,7 +201,9 @@ function ExpenseTableRow({
     );
 }
 
-// Inline edit form: amount, date, category, payment mode, type, notes, recurring; Save calls onSave, Cancel calls onCancel
+const ACCEPTED_IMAGE_TYPES = "image/jpeg,image/png,image/webp,image/gif";
+
+// Inline edit form: amount, date, category, payment mode, type, notes, recurring, receipt; Save calls onSave, Cancel calls onCancel
 function ExpenseEditForm({
     form,
     setForm,
@@ -207,6 +221,35 @@ function ExpenseEditForm({
     onSave: () => void;
     onCancel: () => void;
 }) {
+    const [uploadingReceipt, setUploadingReceipt] = useState(false);
+    const [receiptError, setReceiptError] = useState("");
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    async function handleReceiptChange(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0];
+        e.target.value = "";
+        if (!file) return;
+        if (!file.type.startsWith("image/")) {
+            setReceiptError("Please choose an image file (e.g. JPEG, PNG).");
+            return;
+        }
+        setReceiptError("");
+        setUploadingReceipt(true);
+        try {
+            const { receipt_url } = await uploadReceipt(file);
+            setForm((prev) => ({ ...prev, receipt_url }));
+        } catch (err) {
+            setReceiptError((err as Error).message);
+        } finally {
+            setUploadingReceipt(false);
+        }
+    }
+
+    function handleRemoveReceipt() {
+        setForm((prev) => ({ ...prev, receipt_url: null }));
+        setReceiptError("");
+    }
+
     return (
         <div className="rounded-lg border-2 border-[#4863D4]/30 bg-[#e8ecfc]/50 p-4">
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -291,6 +334,46 @@ function ExpenseEditForm({
                 />
                 Recurring
             </label>
+            {/* Optional receipt: view / remove / upload */}
+            <div className="mt-3 border-t border-slate-200 pt-3">
+                <span className="mb-1 block text-xs font-medium text-slate-600">Receipt (optional)</span>
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept={ACCEPTED_IMAGE_TYPES}
+                    onChange={handleReceiptChange}
+                    className="hidden"
+                />
+                {form.receipt_url ? (
+                    <div className="flex flex-wrap items-center gap-2">
+                        <a
+                            href={form.receipt_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm font-medium text-[#4863D4] hover:underline"
+                        >
+                            View receipt
+                        </a>
+                        <button
+                            type="button"
+                            onClick={handleRemoveReceipt}
+                            className="text-sm text-slate-500 hover:text-red-600"
+                        >
+                            Remove
+                        </button>
+                    </div>
+                ) : (
+                    <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingReceipt}
+                        className="text-sm font-medium text-slate-600 underline hover:text-slate-800 disabled:opacity-50"
+                    >
+                        {uploadingReceipt ? "Uploading…" : "Upload receipt"}
+                    </button>
+                )}
+                {receiptError && <p className="mt-1 text-sm text-red-600">{receiptError}</p>}
+            </div>
             {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
             <div className="mt-4 flex gap-2">
                 <button type="button" onClick={onSave} disabled={saving} className={btnPrimary}>

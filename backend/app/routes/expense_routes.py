@@ -1,6 +1,6 @@
 from datetime import date
 from typing import Optional
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from sqlalchemy.orm import Session
 from app.dependencies.auth_dependency import get_current_user
 from app.dependencies.db_dependency import get_db
@@ -11,6 +11,7 @@ from app.schemas.expense_schema import (
     ExpenseUpdate,
     PaginatedExpensesResponse,
 )
+from app.services.cloudinary_service import upload_receipt as cloudinary_upload_receipt
 from app.services.expense_service import (
     create_user_expense,
     delete_user_expense,
@@ -20,6 +21,21 @@ from app.services.expense_service import (
     update_user_expense,
 )
 router = APIRouter(prefix="/expenses", tags=["Expenses"])
+
+
+@router.post("/upload-receipt")
+async def upload_receipt_route(
+    file: UploadFile = File(..., description="Receipt image (optional when adding/editing expense)"),
+    current_user: User = Depends(get_current_user),
+):
+    """Upload a receipt image to Cloudinary; returns { receipt_url } for use in create/update expense."""
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(422, detail="File must be an image (e.g. image/jpeg, image/png)")
+    content = await file.read()
+    if len(content) > 10 * 1024 * 1024:  # 10 MB
+        raise HTTPException(422, detail="File too large (max 10 MB)")
+    url = cloudinary_upload_receipt(content)
+    return {"receipt_url": url}
 @router.get("", response_model=list[ExpenseResponse])
 def list_expenses(
     start_date: Optional[date] = Query(default=None),

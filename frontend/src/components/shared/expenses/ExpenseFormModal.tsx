@@ -1,4 +1,6 @@
+import { useState, useRef } from "react";
 import type { ExpensePayload } from "../../../api/expenses";
+import { uploadReceipt } from "../../../api/expenses";
 import type { Category } from "../../../types";
 import { DatePicker } from "../../ui/DatePicker";
 import { CloseIcon } from "../../ui/icons";
@@ -18,6 +20,8 @@ export interface ExpenseFormModalProps {
     onClose: () => void;
 }
 
+const ACCEPTED_IMAGE_TYPES = "image/jpeg,image/png,image/webp,image/gif";
+
 export default function ExpenseFormModal({
     title,
     form,
@@ -29,6 +33,35 @@ export default function ExpenseFormModal({
     onSubmit,
     onClose,
 }: ExpenseFormModalProps) {
+    const [uploadingReceipt, setUploadingReceipt] = useState(false);
+    const [receiptError, setReceiptError] = useState("");
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    async function handleReceiptChange(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0];
+        e.target.value = "";
+        if (!file) return;
+        if (!file.type.startsWith("image/")) {
+            setReceiptError("Please choose an image file (e.g. JPEG, PNG).");
+            return;
+        }
+        setReceiptError("");
+        setUploadingReceipt(true);
+        try {
+            const { receipt_url } = await uploadReceipt(file);
+            onChange((prev) => ({ ...prev, receipt_url }));
+        } catch (err) {
+            setReceiptError((err as Error).message);
+        } finally {
+            setUploadingReceipt(false);
+        }
+    }
+
+    function handleRemoveReceipt() {
+        onChange((prev) => ({ ...prev, receipt_url: null }));
+        setReceiptError("");
+    }
+
     return (
         <div
             className="fixed inset-0 z-50 flex min-h-screen items-center justify-center bg-black/25 p-4"
@@ -124,6 +157,48 @@ export default function ExpenseFormModal({
                             />
                             Recurring
                         </label>
+
+                        {/* Optional receipt upload (Cloudinary) */}
+                        <div className="mt-4 border-t border-slate-200 pt-4">
+                            <span className="mb-2 block text-xs font-medium text-slate-500">Receipt (optional)</span>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept={ACCEPTED_IMAGE_TYPES}
+                                onChange={handleReceiptChange}
+                                className="hidden"
+                            />
+                            {form.receipt_url ? (
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <a
+                                        href={form.receipt_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-sm font-medium text-[#4863D4] hover:underline"
+                                    >
+                                        View receipt
+                                    </a>
+                                    <button
+                                        type="button"
+                                        onClick={handleRemoveReceipt}
+                                        className="text-sm text-slate-500 hover:text-red-600"
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={uploadingReceipt}
+                                    className="text-sm font-medium text-slate-600 underline hover:text-slate-800 disabled:opacity-50"
+                                >
+                                    {uploadingReceipt ? "Uploading…" : "Upload receipt"}
+                                </button>
+                            )}
+                            {receiptError && <p className="mt-1 text-sm text-red-600">{receiptError}</p>}
+                        </div>
+
                         {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
                         <div className="mt-6 flex justify-end gap-2">
                             <button type="button" onClick={onClose} className={btnSecondary}>

@@ -24,6 +24,7 @@ const defaultPayload: ExpensePayload = {
     category_id: null,
     payment_mode: "CASH",
     transaction_type: "out",
+    receipt_url: null,
 };
 
 // Convert an existing Expense (API shape) into the editable form payload shape.
@@ -37,6 +38,7 @@ function payloadFromExpense(e: Expense): ExpensePayload {
         is_recurring: e.is_recurring,
         recurrence_period: e.recurrence_period ?? null,
         category_id: e.category_id,
+        receipt_url: e.receipt_url ?? null,
     };
 }
 

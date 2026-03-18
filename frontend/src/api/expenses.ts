@@ -19,6 +19,7 @@ export interface ExpensePayload {
     notes?: string | null;
     is_recurring: boolean;
     recurrence_period?: string | null;
+    receipt_url?: string | null;
 }
 
 export async function getExpenses(filters?: ExpenseFilters): Promise<Expense[]> {
@@ -63,4 +64,13 @@ export async function updateExpense(id: number, payload: Partial<ExpensePayload>
 
 export async function deleteExpense(id: number): Promise<void> {
     await api.delete(`/expenses/${id}`);
+}
+
+/** Upload receipt image to Cloudinary; returns the URL to store on the expense. */
+export async function uploadReceipt(file: File): Promise<{ receipt_url: string }> {
+    const formData = new FormData();
+    formData.append("file", file);
+    // Do not set Content-Type: axios sets multipart/form-data with boundary automatically
+    const res = await api.post<{ receipt_url: string }>("/expenses/upload-receipt", formData);
+    return res.data;
 }

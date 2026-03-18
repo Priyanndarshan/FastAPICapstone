@@ -11,6 +11,7 @@ class ExpenseCreate(BaseModel):
     notes: Optional[str] = Field(default=None, max_length=500)
     is_recurring: bool = False
     recurrence_period: Optional[str] = Field(default=None, max_length=20)
+    receipt_url: Optional[str] = Field(default=None, max_length=2048)
 class ExpenseUpdate(BaseModel):
     category_id: Optional[int] = None
     amount: Optional[Decimal] = Field(default=None, gt=0)
@@ -20,6 +21,7 @@ class ExpenseUpdate(BaseModel):
     notes: Optional[str] = Field(default=None, max_length=500)
     is_recurring: Optional[bool] = None
     recurrence_period: Optional[str] = Field(default=None, max_length=20)
+    receipt_url: Optional[str] = Field(default=None, max_length=2048)  # set to null/empty to remove
 
     @field_validator("date", mode="before")
     @classmethod
@@ -43,6 +45,7 @@ class ExpenseResponse(BaseModel):
     notes: Optional[str] = None
     is_recurring: bool
     recurrence_period: Optional[str] = None
+    receipt_url: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
 
 
