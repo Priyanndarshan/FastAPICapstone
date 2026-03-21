@@ -1,11 +1,7 @@
 import { useMemo } from "react";
 import type { Budget, MonthlyAnalytics } from "../../types";
 
-/**
- * Derives a map of categoryId → { limit, spent } for a given month/year.
- * - `budgets` provide the per-category limit for that month/year.
- * - `monthly` analytics provide the actual spent per category for that month/year.
- */
+
 export function useBudgetByCategory(
   month: number,
   year: number,

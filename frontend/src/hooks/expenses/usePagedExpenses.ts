@@ -3,15 +3,9 @@ import * as expensesApi from "../../api/expenses";
 import type { PagedExpenseQuery } from "../../api/expenses";
 import { parseApiError } from "../../utils/parseApiError";
 
-// Reuse the sort options defined for the paged expenses query.
 export type SortOption = PagedExpenseQuery["sort_by"];
 
-/**
- * Server-side pagination hook for the Expenses page.
- * - Accepts a single query object (filters + sort + page/page_size)
- * - Sends it to GET /expenses/paged
- * - Returns the current page items plus total count (for pagination UI).
- */
+
 export function usePagedExpenses(query: PagedExpenseQuery) {
   const [items, setItems] = useState<expensesApi.PaginatedExpensesResponse["items"]>([]);
   const [total, setTotal] = useState(0);

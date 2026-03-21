@@ -13,8 +13,8 @@ class Expense(Base):
     date = Column(Date, nullable=False, default=date.today)
     notes = Column(String, nullable=True)
     is_recurring = Column(Boolean, nullable=False, default=False)
-    recurrence_period = Column(String, nullable=True)  # e.g. "daily" | "weekly" | "monthly"
-    receipt_url = Column(String, nullable=True)  # optional Cloudinary URL for receipt image
+    recurrence_period = Column(String, nullable=True)                                       
+    receipt_url = Column(String, nullable=True)                                             
     created_at = Column(DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     user = relationship("User", back_populates="expenses")
     category = relationship("Category", back_populates="expenses")

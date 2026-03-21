@@ -1,28 +1,22 @@
-// layout
 export { default as Layout } from "./layout/Layout";
 export { default as Navbar } from "./layout/Navbar";
 export { default as TopNav } from "./layout/TopNav";
 
-// shared UI (widgets)
 export { default as ConfirmModal } from "./widgets/ConfirmModal";
 export { default as PageHeader } from "./widgets/PageHeader";
 export { default as CashFlowSummaryCard } from "./widgets/CashFlowSummaryCard";
 export { default as OverBudgetBanner } from "./widgets/OverBudgetBanner";
 
-// dashboard
 export { default as RecentExpenses } from "./dashboard/RecentExpenses";
 
-// charts
 export { default as SpendingTrendChart } from "./charts/SpendingTrendChart";
 export { default as CategorySpendingPieChart } from "./charts/CategorySpendingPieChart";
 
-// expenses
 export { default as ExpenseFormModal } from "./expenses/ExpenseFormModal";
 export { default as ExpenseFiltersBar } from "./expenses/ExpenseFiltersBar";
 export { default as ExpenseTable } from "./expenses/ExpenseTable";
 export { default as ExportMenu } from "./expenses/ExportMenu";
 
-// categories
 export { default as AddCategoryModal } from "./categories/AddCategoryModal";
 export { default as BudgetFormModal } from "./categories/BudgetFormModal";
 export { CategoryRow } from "./categories/CategoryRow";

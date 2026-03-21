@@ -1,4 +1,3 @@
-import logging
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,7 +13,7 @@ from app.routes import expense_routes
 from app.routes import budget_routes
 from app.routes import analytics_routes
 
-logger = logging.getLogger(__name__)
+
 app = FastAPI()
 Base.metadata.create_all(bind=engine)
 origins = [origin.strip() for origin in settings.ALLOWED_ORIGINS.split(",") if origin.strip()]
@@ -34,8 +33,6 @@ app.include_router(analytics_routes.router)
 
 @app.exception_handler(SQLAlchemyError)
 async def sqlalchemy_error_handler(request: Request, exc: SQLAlchemyError):
-    # Log full exception details server-side; return a generic message to clients.
-    logger.exception("Database error on", request.method, request.url.path, exc_info=exc)
     return JSONResponse(
         status_code=500,
         content={"detail": "Database error. Please try again later."},

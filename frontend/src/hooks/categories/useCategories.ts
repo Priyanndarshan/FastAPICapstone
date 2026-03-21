@@ -1,22 +1,17 @@
-// Used by: Categories.tsx (full CRUD + loading/error/refetch), Expenses.tsx and Dashboard.tsx (categories list only).
-// Depends on: api/categories (backend), types (Category), utils/parseApiError.
 import { useEffect, useState } from "react";
 import * as categoriesApi from "../../api/categories";
 import type { Category } from "../../types";
 import { parseApiError } from "../../utils/parseApiError";
 
 export function useCategories() {
-    // Holds categories array + loading/error state for async operations.
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    // Load categories once on mount; used by Categories page to show list and by Expenses/Dashboard to have category options.
     useEffect(() => {
         fetchCategories();
     }, []);
 
-    // Fetches all categories from API via run(); exposed as refetch so Categories page can retry on error.
     async function fetchCategories() {
         setLoading(true);
         setError("");
@@ -30,7 +25,6 @@ export function useCategories() {
         }
     }
 
-    // Creates a category via API and appends it to local state; returns new category. Used by Categories.tsx "Add category" form (and optional budget).
     async function addCategory(name: string): Promise<Category> {
         try {
             const cat = await categoriesApi.createCategory(name);
@@ -41,7 +35,6 @@ export function useCategories() {
         }
     }
 
-    // Updates category name via API and replaces that item in local state. Used by Categories.tsx when saving the budget form (if name changed).
     async function updateCategory(id: number, name: string) {
         try {
             const cat = await categoriesApi.updateCategory(id, name);
@@ -51,7 +44,6 @@ export function useCategories() {
         }
     }
 
-    // Deletes category via API and removes it from local state. Used by Categories.tsx delete confirmation modal.
     async function removeCategory(id: number) {
         try {
             await categoriesApi.deleteCategory(id);
@@ -61,7 +53,6 @@ export function useCategories() {
         }
     }
 
-    // Public API: list + loading/error for UI; refetch for retry; add/update/remove for Categories page. Expenses and Dashboard only destructure categories.
     return {
         categories,
         loading,

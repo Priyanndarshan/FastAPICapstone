@@ -55,7 +55,7 @@ export default function ExpenseTable({
 }: ExpenseTableProps) {
     return (
         <>
-            {/* Pagination: "Showing X – Y of Z" + prev/next buttons */}
+            {}
             <div className="flex flex-col gap-4 border-b border-slate-200 bg-slate-50/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-sm text-slate-600">
                     Showing <span className="font-medium">{startEntry}</span> – <span className="font-medium">{endEntry}</span> of <span className="font-medium">{totalCount}</span> entries
@@ -84,7 +84,7 @@ export default function ExpenseTable({
                     </button>
                 </div>
             </div>
-            {/* Table: each row is either ExpenseTableRow or inline ExpenseEditForm when editId matches */}
+            {}
             <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                     <thead>
@@ -130,7 +130,6 @@ export default function ExpenseTable({
     );
 }
 
-// One table row: date, notes (+ recurring badge), category, payment mode, amount, edit/delete buttons
 function ExpenseTableRow({
     expense,
     categories,
@@ -203,7 +202,6 @@ function ExpenseTableRow({
 
 const ACCEPTED_IMAGE_TYPES = "image/jpeg,image/png,image/webp,image/gif";
 
-// Inline edit form: amount, date, category, payment mode, type, notes, recurring, receipt; Save calls onSave, Cancel calls onCancel
 function ExpenseEditForm({
     form,
     setForm,
@@ -334,7 +332,7 @@ function ExpenseEditForm({
                 />
                 Recurring
             </label>
-            {/* Optional receipt: view / remove / upload */}
+            {}
             <div className="mt-3 border-t border-slate-200 pt-3">
                 <span className="mb-1 block text-xs font-medium text-slate-600">Receipt (optional)</span>
                 <input

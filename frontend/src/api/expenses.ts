@@ -66,11 +66,10 @@ export async function deleteExpense(id: number): Promise<void> {
     await api.delete(`/expenses/${id}`);
 }
 
-/** Upload receipt image to Cloudinary; returns the URL to store on the expense. */
+
 export async function uploadReceipt(file: File): Promise<{ receipt_url: string }> {
     const formData = new FormData();
     formData.append("file", file);
-    // Do not set Content-Type: axios sets multipart/form-data with boundary automatically
     const res = await api.post<{ receipt_url: string }>("/expenses/upload-receipt", formData);
     return res.data;
 }

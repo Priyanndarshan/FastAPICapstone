@@ -32,7 +32,7 @@ async def upload_receipt_route(
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(422, detail="File must be an image (e.g. image/jpeg, image/png)")
     content = await file.read()
-    if len(content) > 10 * 1024 * 1024:  # 10 MB
+    if len(content) > 10 * 1024 * 1024:         
         raise HTTPException(422, detail="File too large (max 10 MB)")
     url = cloudinary_upload_receipt(content)
     return {"receipt_url": url}

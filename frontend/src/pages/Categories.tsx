@@ -15,17 +15,14 @@ export default function Categories() {
     const { budgets, addBudget, updateBudget } = useBudgets();
     const { monthly } = useAnalytics(currentMonth, currentYear, 1);
 
-    // UI state
     const [addModal, setAddModal] = useState({ open: false });
     const [deleteId, setDeleteId] = useState<number | null>(null);
     const [deleting, setDeleting] = useState(false);
     const [budgetForm, setBudgetForm] = useState<{ categoryId: number | null }>({ categoryId: null });
     const [budgetFormInitial, setBudgetFormInitial] = useState({ name: "", amount: "" });
 
-    // Derived map: categoryId → { limit, spent } via shared hook
     const budgetByCategory = useBudgetByCategory(currentMonth, currentYear, budgets, monthly);
 
-    // UI handlers
     function openAddModal() {
         setAddModal({ open: true });
     }

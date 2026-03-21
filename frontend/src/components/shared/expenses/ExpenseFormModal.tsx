@@ -158,7 +158,7 @@ export default function ExpenseFormModal({
                             Recurring
                         </label>
 
-                        {/* Optional receipt upload (Cloudinary) */}
+                        {}
                         <div className="mt-4 border-t border-slate-200 pt-4">
                             <span className="mb-2 block text-xs font-medium text-slate-500">Receipt (optional)</span>
                             <input

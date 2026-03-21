@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 class ExpenseCreate(BaseModel):
     category_id: Optional[int] = None
     amount: Decimal = Field(gt=0)
-    payment_mode: str = Field(default="CASH", max_length=20)  # e.g. UPI, CASH
+    payment_mode: str = Field(default="CASH", max_length=20)                  
     transaction_type: str = Field(default="out", pattern="^(in|out)$")
     date: date_type
     notes: Optional[str] = Field(default=None, max_length=500)
@@ -21,11 +21,11 @@ class ExpenseUpdate(BaseModel):
     notes: Optional[str] = Field(default=None, max_length=500)
     is_recurring: Optional[bool] = None
     recurrence_period: Optional[str] = Field(default=None, max_length=20)
-    receipt_url: Optional[str] = Field(default=None, max_length=2048)  # set to null/empty to remove
+    receipt_url: Optional[str] = Field(default=None, max_length=2048)                               
 
     @field_validator("date", mode="before")
     @classmethod
-    def parse_date(cls, v):  # noqa: B902
+    def parse_date(cls, v):              
         if v is None:
             return None
         if isinstance(v, date_type):
@@ -49,7 +49,7 @@ class ExpenseResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# Paginated response wrapper for server-side pagination of expenses
+                                                                   
 class PaginatedExpensesResponse(BaseModel):
     items: list[ExpenseResponse]
     total: int

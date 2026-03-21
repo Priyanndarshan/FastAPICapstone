@@ -22,12 +22,10 @@ export function useCategoryBudgetForm({
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // Keep local state in sync when initial props change (for edit flows)
   useEffect(() => {
     setName(initialName);
   }, [initialName]);
 
-  // Intentionally do not sync amount after mount so the last edited value is preserved
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

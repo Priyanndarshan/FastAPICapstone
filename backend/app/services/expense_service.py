@@ -88,7 +88,7 @@ def update_user_expense(db: Session, user_id: int, expense_id: int, *, updates: 
         category_id = updates["category_id"]
         if category_id is not None and not get_category_for_user(db, user_id, category_id):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
-    # Normalize date if provided as ISO string
+                                              
     if "date" in updates and isinstance(updates["date"], str):
         try:
             updates["date"] = date.fromisoformat(updates["date"])
@@ -99,7 +99,7 @@ def update_user_expense(db: Session, user_id: int, expense_id: int, *, updates: 
             )
     for k, v in updates.items():
         if k == "receipt_url" and v is not None and (isinstance(v, str) and not v.strip()):
-            v = None  # treat empty string as "remove receipt"
+            v = None                                          
         setattr(expense, k, v)
     return save_expense(db, expense)
 def delete_user_expense(db: Session, user_id: int, expense_id: int) -> dict:

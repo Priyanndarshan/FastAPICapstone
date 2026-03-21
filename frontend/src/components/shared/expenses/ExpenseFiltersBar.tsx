@@ -114,7 +114,7 @@ export default function ExpenseFiltersBar({
                             />
                         </>
                     )}
-                    {/* Transaction type: All / Cash In / Cash Out */}
+                    {}
                     <div className="relative" ref={filters.typeFilterRef}>
                         <button
                             type="button"
@@ -174,7 +174,7 @@ export default function ExpenseFiltersBar({
                             </div>
                         )}
                     </div>
-                    {/* Payment modes: multi-select checkboxes from PAYMENT_MODES */}
+                    {}
                     <div className="relative" ref={filters.paymentModesRef}>
                         <button
                             type="button"
@@ -313,7 +313,7 @@ export default function ExpenseFiltersBar({
                             </div>
                         )}
                     </div>
-                    {/* Recurring filter: All / Recurring only / Non-recurring only */}
+                    {}
                     <div className="relative" ref={filters.recurringFilterRef}>
                         <button
                             type="button"
@@ -373,7 +373,7 @@ export default function ExpenseFiltersBar({
                             </div>
                         )}
                     </div>
-                    {/* Clear all filters when any filter is active */}
+                    {}
                     {filters.hasActiveFilters && (
                         <button
                             type="button"
@@ -385,7 +385,7 @@ export default function ExpenseFiltersBar({
                         </button>
                     )}
                 </div>
-                {/* Search input (debounced in useExpenseFilters) + Sort dropdown + Cash In / Cash Out buttons */}
+                {}
                 <div className="flex flex-wrap items-stretch gap-3">
                     <div className="relative flex min-h-10 min-w-[200px] max-w-md flex-1 items-center">
                         <span className="pointer-events-none absolute left-3 text-slate-400">

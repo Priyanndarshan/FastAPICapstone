@@ -17,7 +17,6 @@ export interface CategoryRowProps {
     onAddBudgetClick: () => void;
 }
 
-// Renders one category card: name, month/year label, spent vs limit progress (or "no budget" copy), delete and add/edit budget buttons. Uses formatAmount and MONTH_NAMES.
 export function CategoryRow({
     cat,
     budgetInfo,
@@ -26,7 +25,6 @@ export function CategoryRow({
     onDeleteClick,
     onAddBudgetClick,
 }: CategoryRowProps) {
-    // Derived for progress display: whether category has a budget, amount left, over-budget flag, and percentage for bar width
     const hasBudget = budgetInfo && budgetInfo.limit > 0;
     const left = hasBudget ? budgetInfo!.limit - budgetInfo!.spent : 0;
     const overBudget = hasBudget && budgetInfo!.spent > budgetInfo!.limit;

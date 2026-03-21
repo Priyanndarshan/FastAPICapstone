@@ -1,18 +1,14 @@
-// Used by: Expenses.tsx. Provides filter state, dropdown open/refs, outside-click close, and builds ExpenseFilters for API. Depends on: api/expenses (ExpenseFilters).
 import type { RefObject } from "react";
 import { useState, useRef, useEffect } from "react";
 import type { ExpenseFilters } from "../../api/expenses";
 
-// Optional: pass export menu ref + setter so the hook closes the export dropdown on outside click
 export interface UseExpenseFiltersOptions {
     exportMenuRef?: RefObject<HTMLDivElement | null>;
     setExportMenuOpen?: (open: boolean) => void;
 }
 
-// Duration presets for the date-range filter; "custom" uses filterStart/filterEnd
 export type DurationFilter = "all_time" | "today" | "this_week" | "this_month" | "custom";
 
-// Converts duration + optional custom dates into start/end YYYY-MM-DD for API; used by the onFilterChange effect
 function getDateRange(
     duration: DurationFilter,
     filterStart: string,
@@ -54,7 +50,6 @@ export function useExpenseFilters(
     onFilterChange: (filters: ExpenseFilters) => void,
     options?: UseExpenseFiltersOptions
 ) {
-    // Filter values: duration (and custom start/end), type, payment modes, category, recurring, search; payment modes dropdown open
     const [duration, setDuration] = useState<DurationFilter>("all_time");
     const [filterStart, setFilterStart] = useState("");
     const [filterEnd, setFilterEnd] = useState("");
@@ -68,7 +63,6 @@ export function useExpenseFilters(
     const paymentModesRef = useRef<HTMLDivElement>(null);
     const didMount = useRef(false);
 
-    // Dropdown open state + refs for type, duration, category, sort, recurring (so Expenses can close on outside click)
     const [typeFilterOpen, setTypeFilterOpen] = useState(false);
     const [durationDropdownOpen, setDurationDropdownOpen] = useState(false);
     const [categoryFilterOpen, setCategoryFilterOpen] = useState(false);
@@ -80,13 +74,11 @@ export function useExpenseFilters(
     const sortDropdownRef = useRef<HTMLDivElement>(null);
     const recurringFilterRef = useRef<HTMLDivElement>(null);
 
-    // Debounce search keyword so API isn’t hit on every keystroke
     useEffect(() => {
         const t = setTimeout(() => setDebouncedKeyword(searchKeyword), 400);
         return () => clearTimeout(t);
     }, [searchKeyword]);
 
-    // When filter values change, build ExpenseFilters and call onFilterChange (skip first mount to avoid double fetch)
     useEffect(() => {
         if (!didMount.current) {
             didMount.current = true;
@@ -103,7 +95,6 @@ export function useExpenseFilters(
         onFilterChange(next);
     }, [duration, filterStart, filterEnd, filterType, paymentModeSelected, filterCategoryId, debouncedKeyword]);
 
-    // Close all dropdowns (including payment modes and optional export menu) when clicking outside their refs
     useEffect(() => {
         function handleClickOutside(e: MouseEvent) {
             const target = e.target as Node;
@@ -133,7 +124,6 @@ export function useExpenseFilters(
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [options?.exportMenuRef, options?.setExportMenuOpen]);
 
-    // Reset all filter state, close all dropdowns, and notify parent with empty filters
     function clearFilters() {
         setDuration("all_time");
         setFilterStart("");
@@ -153,7 +143,6 @@ export function useExpenseFilters(
         onFilterChange({});
     }
 
-    // True if any filter is set (used to show "Clear All" and empty-state messaging)
     const hasActiveFilters =
         duration !== "all_time" ||
         !!filterType ||
@@ -162,7 +151,6 @@ export function useExpenseFilters(
         !!filterRecurring ||
         !!searchKeyword.trim();
 
-    // Public API: filter values + setters, refs, clearFilters, hasActiveFilters, getDateRange, and dropdown open state + refs
     return {
         duration,
         setDuration,

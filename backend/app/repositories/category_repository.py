@@ -24,7 +24,7 @@ def update_category_name(db: Session, category: Category, name: str) -> Category
     db.refresh(category)
     return category
 def delete_category(db: Session, category: Category) -> None:
-    # Clear references so DB allows delete (avoids IntegrityError / 500)
+                                                                        
     db.query(Expense).filter(Expense.category_id == category.id).update(
         {Expense.category_id: None}, synchronize_session="fetch"
     )

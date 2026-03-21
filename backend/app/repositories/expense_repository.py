@@ -79,7 +79,7 @@ def list_expenses_for_user_paged(
 
     total = base_q.count()
 
-    # Aggregate totals for all filtered expenses (independent of pagination).
+                                                                             
     cash_in_total, cash_out_total = (
         base_q.with_entities(
             func.coalesce(
@@ -98,7 +98,7 @@ def list_expenses_for_user_paged(
         .first()
     )
 
-    # Apply sorting for the current page.
+                                         
     q = base_q
     if sort_by == "amount_desc":
         q = q.order_by(Expense.amount.desc(), Expense.id.desc())

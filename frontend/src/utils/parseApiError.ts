@@ -13,19 +13,4 @@ export function parseApiError(err: unknown, fallback = "Something went wrong"): 
 
 
 
-// {
-//     message: "Request failed with status code 422",
-//     response: {
-//         status: 422,
-//         data: {
-//             detail: [
-//                 { msg: "field required", loc: ["body", "email"] },
-//                 { msg: "value is not a valid email", loc: ["body", "email"] }
-//             ]
-//         }
-//     },
-//     config: { ... },
-//     headers: { ... }
-// }
 
-//{ "detail": "Email already registered" }
